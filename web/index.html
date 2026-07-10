@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>香港教育更新儀表板</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="header-top">
+        <div>
+          <p class="eyebrow">Hong Kong Education Monitor</p>
+          <h1>香港教育更新儀表板</h1>
+          <p class="subtitle">STEAM 比賽 · 教師培訓 · QEF · 教育局通函</p>
+        </div>
+        <div class="header-actions">
+          <label class="toggle">
+            <input type="checkbox" id="newOnly" />
+            <span>只顯示新資料</span>
+          </label>
+          <button class="btn btn-primary" id="refreshBtn">重新整理</button>
+        </div>
+      </div>
+      <div class="meta" id="metaBar">載入中…</div>
+      <div class="stats" id="statsGrid"></div>
+      <div class="toolbar">
+        <input type="search" id="searchInput" placeholder="搜尋標題、摘要…" />
+        <div class="tabs" id="categoryTabs"></div>
+      </div>
+    </header>
+
+    <main>
+      <div class="loading hidden" id="loading">
+        <div class="spinner"></div>
+        <p>正在擷取最新資料，約需 20–60 秒…</p>
+      </div>
+      <div class="empty hidden" id="emptyState">
+        <p>沒有符合條件的項目</p>
+      </div>
+      <section class="cards" id="cardsGrid"></section>
+    </main>
+  </div>
+
+  <template id="cardTemplate">
+    <article class="card">
+      <div class="card-head">
+        <span class="badge category-badge"></span>
+        <span class="badge new-badge hidden">新</span>
+      </div>
+      <h2 class="card-title"><a target="_blank" rel="noopener"></a></h2>
+      <p class="card-date"></p>
+      <p class="card-summary"></p>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
