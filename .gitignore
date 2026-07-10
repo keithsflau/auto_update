@@ -16,9 +16,9 @@ probe_output.txt
 probe_findings.txt
 hk_steam_probe.txt
 probe_hk_steam.py
-hk_*.py
-hk_*.txt
-hk.json
+/hk_*.py
+/hk_*.txt
+/hk.json
 refine_probe.py
 refined.json
 edu*.json
