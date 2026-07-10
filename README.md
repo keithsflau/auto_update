@@ -21,12 +21,25 @@ python -m monitor.main
 
 ## 網頁儀表板
 
+**線上版（GitHub Pages，每 6 小時自動更新）：**  
+https://keithsflau.github.io/auto_update/
+
+**本機版：**
+
 ```bash
 run_web.bat
 # 開啟 http://127.0.0.1:8080
 ```
 
 ## GitHub Actions
+
+Workflow 會每 **6 小時**自動：
+
+1. 執行監察程式（擷取資料、發送通知）
+2. 更新 `dashboard.json`
+3. 部署網頁儀表板到 GitHub Pages
+
+手動測試：Repository → **Actions** → **Education Update Monitor** → **Run workflow**
 
 在 Repository Secrets 設定：
 

@@ -6,20 +6,29 @@ from datetime import datetime, timezone
 
 from monitor.config import BASE_DIR, CATEGORY_LABELS
 from monitor.models import UpdateItem
-from monitor.state import load_state
+from monitor.state import load_state, normalize_text
+from monitor.text_util import format_display_date, parse_item_date, within_last_year
 
 DASHBOARD_FILE = BASE_DIR / "data" / "dashboard.json"
+LOOKBACK_DAYS = 365
 
 
 def item_to_dict(item: UpdateItem, *, is_new: bool) -> dict:
+    title = normalize_text(item.title)
+    summary = normalize_text(item.summary)
+    date_raw = normalize_text(item.date)
+    parsed = parse_item_date(date_raw, title)
+
     return {
         "id": item.item_id,
         "category": item.category,
         "category_label": CATEGORY_LABELS.get(item.category, item.category),
-        "title": item.title,
+        "title": title,
         "url": item.url,
-        "date": item.date,
-        "summary": item.summary,
+        "date": format_display_date(parsed, date_raw),
+        "date_raw": date_raw,
+        "date_sort": parsed.strftime("%Y-%m-%d") if parsed else "",
+        "summary": summary,
         "is_new": is_new,
         "fingerprint": item.fingerprint(),
     }
@@ -37,16 +46,29 @@ def build_snapshot(
 
     items = [
         item_to_dict(item, is_new=item.fingerprint() in new_fps)
-        for item in sorted(all_items, key=lambda x: (not (x.fingerprint() in new_fps), x.title))
+        for item in all_items
     ]
-    # new items first
-    items.sort(key=lambda row: (not row["is_new"], row["title"]))
+
+    items = [
+        row
+        for row in items
+        if within_last_year(parse_item_date(row["date_raw"], row["title"]), days=LOOKBACK_DAYS)
+    ]
+
+    items.sort(
+        key=lambda row: (
+            row["date_sort"] or "0000-01-01",
+            row["title"],
+        ),
+        reverse=True,
+    )
 
     counts = Counter(row["category"] for row in items)
     new_counts = Counter(row["category"] for row in items if row["is_new"])
 
     return {
         "updated_at": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
+        "lookback_days": LOOKBACK_DAYS,
         "total": len(items),
         "new_total": sum(1 for row in items if row["is_new"]),
         "counts": {key: counts.get(key, 0) for key in CATEGORY_LABELS},

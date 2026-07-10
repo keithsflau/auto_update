@@ -14,6 +14,8 @@ const CATEGORY_COLORS = {
   edb_circular: { bg: "#f8fafc", color: "#334155" },
 };
 
+const isLocalServer = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
 let snapshot = null;
 let activeCategory = "all";
 let newOnly = false;
@@ -52,12 +54,21 @@ function setLoading(isLoading) {
 async function fetchData(refresh = false) {
   setLoading(true);
   try {
-    const url = refresh ? "/api/refresh" : "/api/data";
-    const options = refresh ? { method: "POST" } : {};
-    const response = await fetch(url, options);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || "載入失敗");
+    let data;
+    if (isLocalServer) {
+      const url = refresh ? "/api/refresh" : "/api/data";
+      const options = refresh ? { method: "POST" } : {};
+      const response = await fetch(url, options);
+      data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "載入失敗");
+      }
+    } else {
+      const response = await fetch(`data/dashboard.json?t=${Date.now()}`);
+      if (!response.ok) {
+        throw new Error("載入失敗");
+      }
+      data = await response.json();
     }
     snapshot = data;
     render();
@@ -124,13 +135,20 @@ function renderTabs() {
 }
 
 function filteredItems() {
-  return (snapshot.items || []).filter((item) => {
-    if (activeCategory !== "all" && item.category !== activeCategory) return false;
-    if (newOnly && !item.is_new) return false;
-    if (!searchQuery) return true;
-    const blob = `${item.title} ${item.summary} ${item.category_label}`.toLowerCase();
-    return blob.includes(searchQuery);
-  });
+  return (snapshot.items || [])
+    .filter((item) => {
+      if (activeCategory !== "all" && item.category !== activeCategory) return false;
+      if (newOnly && !item.is_new) return false;
+      if (!searchQuery) return true;
+      const blob = `${item.title} ${item.summary} ${item.category_label}`.toLowerCase();
+      return blob.includes(searchQuery);
+    })
+    .sort((a, b) => {
+      const dateA = a.date_sort || "0000-01-01";
+      const dateB = b.date_sort || "0000-01-01";
+      if (dateA !== dateB) return dateB.localeCompare(dateA);
+      return (a.title || "").localeCompare(b.title || "", "zh-HK");
+    });
 }
 
 function renderCards(items) {
@@ -172,7 +190,9 @@ function renderCards(items) {
 function render() {
   if (!snapshot) return;
 
-  els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 共 ${snapshot.total} 項 · ${snapshot.new_total} 項新資料`;
+  const lookback = snapshot.lookback_days || 365;
+  const autoUpdate = isLocalServer ? "" : " · 每 6 小時自動更新";
+  els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內 ${snapshot.total} 項 · ${snapshot.new_total} 項新資料 · 按日期由近到遠排列${autoUpdate}`;
   renderStats();
   renderTabs();
   renderCards(filteredItems());

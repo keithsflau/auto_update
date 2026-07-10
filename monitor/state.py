@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from monitor.config import LOG_FILE, STATE_FILE
+from monitor.text_util import fix_mojibake
 
 
 def _ensure_parent(path: Path) -> None:
@@ -50,4 +51,5 @@ def log(message: str) -> None:
 
 
 def normalize_text(text: str) -> str:
-    return re.sub(r"\s+", " ", text or "").strip()
+    cleaned = re.sub(r"\s+", " ", text or "").strip()
+    return fix_mojibake(cleaned)
