@@ -57,6 +57,64 @@ HK_MEDIA_FEEDS: tuple[dict[str, str | bool], ...] = (
         "url": "https://www.bastillepost.com/hongkong/feed/",
         "education_only": True,
     },
+    # Priority HK media: am730 · 星島 · SCMP · unwire.hk
+    {
+        "key": "am730_school",
+        "source": "am730",
+        "url": (
+            "https://news.google.com/rss/search?q=site:am730.com.hk+"
+            "%E5%AD%B8%E6%A0%A1&hl=zh-HK&gl=HK&ceid=HK:zh-Hant"
+        ),
+        "education_only": False,
+        "include_general": True,
+    },
+    {
+        "key": "scmp_edu_zh",
+        "source": "南華早報",
+        "url": (
+            "https://news.google.com/rss/search?q=site:scmp.com+"
+            "%E6%95%99%E8%82%B2&hl=zh-HK&gl=HK&ceid=HK:zh-Hant"
+        ),
+        "education_only": False,
+        "include_general": True,
+    },
+    {
+        "key": "singtao_school",
+        "source": "星島日報",
+        "url": (
+            "https://news.google.com/rss/search?q=site:std.stheadline.com+"
+            "%E5%AD%B8%E6%A0%A1&hl=zh-HK&gl=HK&ceid=HK:zh-Hant"
+        ),
+        "education_only": False,
+        "include_general": True,
+    },
+    {
+        "key": "stheadline_school",
+        "source": "星島頭條",
+        "url": (
+            "https://news.google.com/rss/search?q=site:stheadline.com+"
+            "%E5%AD%B8%E6%A0%A1&hl=zh-HK&gl=HK&ceid=HK:zh-Hant"
+        ),
+        "education_only": False,
+        "include_general": True,
+    },
+    {
+        "key": "unwire_feed",
+        "source": "unwire.hk",
+        "url": "https://unwire.hk/feed",
+        "education_only": False,
+        "include_general": True,
+    },
+    {
+        "key": "google_unwire",
+        "source": "unwire.hk",
+        "url": (
+            "https://news.google.com/rss/search?q=site:unwire.hk+"
+            "%E6%95%99%E8%82%B2&hl=zh-HK&gl=HK&ceid=HK:zh-Hant"
+        ),
+        "education_only": False,
+        "include_general": True,
+    },
     # Google News — aggregates HK online media without public RSS
     {
         "key": "google_edu",
