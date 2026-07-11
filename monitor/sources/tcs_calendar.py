@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from monitor.config import USER_AGENT
-from monitor.filters import is_tcs_teacher_course
+from monitor.filters import classify_tcs_subcategory, is_tcs_teacher_course
 from monitor.models import UpdateItem
 from monitor.state import normalize_text
 
@@ -92,6 +92,7 @@ def fetch_tcs_teacher_items() -> list[UpdateItem]:
                 item_id=course["course_id"],
                 title=course["title"],
                 url=course["url"],
+                subcategory=classify_tcs_subcategory(course["title"], course["course_id"]),
             )
     except requests.RequestException:
         pass
@@ -107,6 +108,7 @@ def fetch_tcs_teacher_items() -> list[UpdateItem]:
                 title=course["title"],
                 url=course["url"],
                 date=course.get("date", ""),
+                subcategory=classify_tcs_subcategory(course["title"], course["course_id"]),
             )
     except requests.RequestException:
         pass

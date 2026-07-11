@@ -2,6 +2,8 @@ const CATEGORY_ORDER = [
   "steam_primary",
   "steam_secondary",
   "tcs_teacher",
+  "news_primary",
+  "news_secondary",
   "qef",
   "edb_circular",
 ];
@@ -10,6 +12,8 @@ const CATEGORY_COLORS = {
   steam_primary: { bg: "#eefaf3", color: "#0f7a4c" },
   steam_secondary: { bg: "#eef6ff", color: "#1f5eff" },
   tcs_teacher: { bg: "#f6f0ff", color: "#6d28d9" },
+  news_primary: { bg: "#fff1f2", color: "#be123c" },
+  news_secondary: { bg: "#eff6ff", color: "#1d4ed8" },
   qef: { bg: "#fff7ed", color: "#c2410c" },
   edb_circular: { bg: "#f8fafc", color: "#334155" },
 };
@@ -140,7 +144,7 @@ function filteredItems() {
       if (activeCategory !== "all" && item.category !== activeCategory) return false;
       if (newOnly && !item.is_new) return false;
       if (!searchQuery) return true;
-      const blob = `${item.title} ${item.summary} ${item.category_label}`.toLowerCase();
+      const blob = `${item.title} ${item.summary} ${item.category_label} ${item.subcategory_label || ""}`.toLowerCase();
       return blob.includes(searchQuery);
     })
     .sort((a, b) => {
@@ -159,6 +163,7 @@ function renderCards(items) {
     const node = els.cardTemplate.content.cloneNode(true);
     const card = node.querySelector(".card");
     const categoryBadge = node.querySelector(".category-badge");
+    const subcategoryBadge = node.querySelector(".subcategory-badge");
     const newBadge = node.querySelector(".new-badge");
     const titleLink = node.querySelector(".card-title a");
     const dateEl = node.querySelector(".card-date");
@@ -173,6 +178,13 @@ function renderCards(items) {
     categoryBadge.textContent = item.category_label;
     categoryBadge.style.background = colors.bg;
     categoryBadge.style.color = colors.color;
+
+    if (item.subcategory_label) {
+      subcategoryBadge.textContent = item.subcategory_label;
+      subcategoryBadge.classList.remove("hidden");
+    } else {
+      subcategoryBadge.classList.add("hidden");
+    }
 
     titleLink.textContent = item.title;
     titleLink.href = item.url || "#";
@@ -191,7 +203,7 @@ function render() {
   if (!snapshot) return;
 
   const lookback = snapshot.lookback_days || 365;
-  const autoUpdate = isLocalServer ? "" : " · 每 6 小時自動更新";
+  const autoUpdate = isLocalServer ? "" : " · 每 6 小時自動更新 · TCS 每日電郵";
   els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內 ${snapshot.total} 項 · ${snapshot.new_total} 項新資料 · 按日期由近到遠排列${autoUpdate}`;
   renderStats();
   renderTabs();

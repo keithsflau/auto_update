@@ -101,15 +101,21 @@ def _send_telegram(message: str) -> None:
 
 
 def _send_email(message: str) -> None:
-    if not all([EMAIL_SMTP_USER, EMAIL_SMTP_PASSWORD, EMAIL_TO]):
+    if not EMAIL_TO:
+        raise RuntimeError("請設定 EMAIL_TO。")
+    send_email_to(EMAIL_TO, "香港教育更新通知", message)
+
+
+def send_email_to(recipient: str, subject: str, message: str) -> None:
+    if not all([EMAIL_SMTP_USER, EMAIL_SMTP_PASSWORD, recipient]):
         raise RuntimeError(
-            "請設定 EMAIL_SMTP_USER、EMAIL_SMTP_PASSWORD、EMAIL_TO。"
+            "請設定 EMAIL_SMTP_USER、EMAIL_SMTP_PASSWORD，以及收件人電郵。"
         )
 
     mail = MIMEText(message, "plain", "utf-8")
-    mail["Subject"] = "香港教育更新通知"
+    mail["Subject"] = subject
     mail["From"] = EMAIL_SMTP_USER
-    mail["To"] = EMAIL_TO
+    mail["To"] = recipient
 
     with smtplib.SMTP(EMAIL_SMTP_HOST, EMAIL_SMTP_PORT, timeout=30) as server:
         server.starttls()

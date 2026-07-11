@@ -144,3 +144,66 @@ def is_tcs_teacher_course(title: str, course_id: str = "") -> bool:
     if _matches_any(blob, TCS_CORE_KEYWORDS):
         return True
     return _matches_any(blob, TCS_EXCHANGE_KEYWORDS)
+
+
+TCS_SUBCATEGORY_LABELS = {
+    "steam": "STEAM",
+    "ai": "AI",
+    "admin": "行政",
+    "self_review": "自評",
+    "exchange": "交流團",
+    "guidance": "訓輔導",
+    "promotion": "晉升",
+    "other": "其他",
+}
+
+TCS_SUBCATEGORY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("exchange", (r"交流", r"考察", r"study tour", r"參訪", r"訪學", r"境外", r"新加坡")),
+    ("promotion", (r"晉升", r"sgm", r"高級學位教師", r"promotion")),
+    ("self_review", (r"自評", r"自我評估", r"校本評估")),
+    ("guidance", (r"訓輔", r"輔導", r"學生支援", r"特殊教育", r"senco", r"情緒", r"行為", r"關顧", r"正向")),
+    ("admin", (r"行政", r"管理", r"領導", r"校長", r"中層", r"電子領導", r"校本管理", r"學校行政")),
+    ("ai", (r"人工智能", r"\bai\b", r"生成式", r"generative ai", r"機械學習", r"深度學習")),
+    (
+        "steam",
+        (
+            r"steam",
+            r"stem",
+            r"編程",
+            r"創科",
+            r"機械人",
+            r"科學",
+            r"科技",
+            r"資訊素養",
+            r"運算思維",
+            r"數字教育",
+            r"資訊科技",
+            r"電子學習",
+            r"編程教育",
+            r"coding",
+            r"robot",
+        ),
+    ),
+)
+
+
+def classify_tcs_subcategory(title: str, course_id: str = "") -> str:
+    blob = f"{course_id} {title}"
+    for key, patterns in TCS_SUBCATEGORY_RULES:
+        if _matches_any(blob, patterns):
+            return key
+    return "other"
+
+
+def classify_news_levels(title: str, summary: str = "") -> list[str]:
+    blob = " ".join([title, summary])
+    primary = is_primary_level(blob)
+    secondary = is_secondary_level(blob)
+    levels: list[str] = []
+    if primary:
+        levels.append("news_primary")
+    if secondary:
+        levels.append("news_secondary")
+    if not levels:
+        levels = ["news_primary", "news_secondary"]
+    return levels

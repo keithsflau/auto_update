@@ -11,6 +11,7 @@ class UpdateItem:
     url: str
     date: str = ""
     summary: str = ""
+    subcategory: str = ""
 
     def fingerprint(self) -> str:
         return f"{self.category}:{self.item_id}"

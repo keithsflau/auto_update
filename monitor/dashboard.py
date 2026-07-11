@@ -5,6 +5,7 @@ from collections import Counter
 from datetime import datetime, timezone
 
 from monitor.config import BASE_DIR, CATEGORY_LABELS
+from monitor.filters import TCS_SUBCATEGORY_LABELS
 from monitor.models import UpdateItem
 from monitor.state import load_state, normalize_text
 from monitor.text_util import format_display_date, parse_item_date, within_last_year
@@ -29,6 +30,8 @@ def item_to_dict(item: UpdateItem, *, is_new: bool) -> dict:
         "date_raw": date_raw,
         "date_sort": parsed.strftime("%Y-%m-%d") if parsed else "",
         "summary": summary,
+        "subcategory": item.subcategory,
+        "subcategory_label": TCS_SUBCATEGORY_LABELS.get(item.subcategory, ""),
         "is_new": is_new,
         "fingerprint": item.fingerprint(),
     }

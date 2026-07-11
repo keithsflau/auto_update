@@ -51,6 +51,13 @@ EMAIL_SMTP_USER = _env("EMAIL_SMTP_USER")
 EMAIL_SMTP_PASSWORD = _env("EMAIL_SMTP_PASSWORD")
 EMAIL_TO = _env("EMAIL_TO")
 
+TCS_DAILY_EMAIL_TO = _env("TCS_DAILY_EMAIL_TO", "lausiufung@kyc.edu.hk")
+TCS_DAILY_EMAIL_ENABLED = _env("TCS_DAILY_EMAIL_ENABLED", "true").lower() in {
+    "1",
+    "true",
+    "yes",
+}
+
 INITIAL_RUN_NOTIFY = _env("INITIAL_RUN_NOTIFY", "false").lower() in {
     "1",
     "true",
@@ -72,4 +79,6 @@ CATEGORY_LABELS = {
     "tcs_teacher": "教師培訓 (TCS)",
     "qef": "優質教育基金 (QEF)",
     "edb_circular": "教育局通函",
+    "news_primary": "小學新聞",
+    "news_secondary": "中學新聞",
 }

@@ -38,6 +38,15 @@ Workflow 會每 **6 小時**自動：
 1. 執行監察程式（擷取資料、發送通知）
 2. 更新 `dashboard.json`
 3. 部署網頁儀表板到 GitHub Pages
+4. **每日**發送 TCS 課程摘要電郵至 `lausiufung@kyc.edu.hk`
+
+### TCS 課程分類
+
+STEAM、AI、行政、自評、交流團、訓輔導、晉升、其他
+
+### 中小學新聞
+
+教育局 RSS（新聞資訊 + 最新消息），由**上個月起**擷取，保留**一年**。
 
 手動測試：Repository → **Actions** → **Education Update Monitor** → **Run workflow**
 
@@ -48,6 +57,8 @@ Workflow 會每 **6 小時**自動：
 - `TELEGRAM_CHAT_ID`
 - `WHATSAPP_PHONE`
 - `CALLMEBOT_APIKEY`
+- `EMAIL_SMTP_USER` / `EMAIL_SMTP_PASSWORD`（TCS 每日電郵需要）
+- `TCS_DAILY_EMAIL_TO`（預設 `lausiufung@kyc.edu.hk`）
 
 ## 通知渠道
 

@@ -4,6 +4,8 @@ on:
   schedule:
     # 每 6 小時（UTC）：香港時間 08:00 / 14:00 / 20:00 / 02:00
     - cron: "0 */6 * * *"
+    # 每日早上 8:00（香港時間）— 確保 TCS 電郵及新聞更新
+    - cron: "0 0 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -59,6 +61,8 @@ jobs:
           EMAIL_SMTP_USER: ${{ secrets.EMAIL_SMTP_USER }}
           EMAIL_SMTP_PASSWORD: ${{ secrets.EMAIL_SMTP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          TCS_DAILY_EMAIL_TO: ${{ secrets.TCS_DAILY_EMAIL_TO }}
+          TCS_DAILY_EMAIL_ENABLED: ${{ secrets.TCS_DAILY_EMAIL_ENABLED }}
           WHATSAPP_PROVIDER: ${{ secrets.WHATSAPP_PROVIDER }}
           WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
           CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}

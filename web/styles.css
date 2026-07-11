@@ -219,6 +219,11 @@ h1 {
   color: #1f5eff;
 }
 
+.subcategory-badge {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
 .new-badge {
   background: #fff1ea;
   color: var(--new);
