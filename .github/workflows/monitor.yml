@@ -20,15 +20,12 @@ permissions:
 
 concurrency:
   group: education-monitor
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  monitor-and-deploy:
+  monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -50,6 +47,14 @@ jobs:
           key: monitor-state-${{ github.repository }}-${{ github.ref }}
           restore-keys: |
             monitor-state-${{ github.repository }}-
+
+      - name: Restore dashboard cache
+        uses: actions/cache@v4
+        with:
+          path: data/dashboard.json
+          key: dashboard-${{ github.repository }}-${{ github.ref }}
+          restore-keys: |
+            dashboard-${{ github.repository }}-
 
       - name: Run monitor
         env:
@@ -79,11 +84,20 @@ jobs:
             python -m monitor.main
           fi
 
-      - name: Build web dashboard
-        run: |
-          mkdir -p _site/data
-          cp web/*.html web/app.js web/styles.css _site/
-          cp data/dashboard.json _site/data/dashboard.json
+      - name: Save dashboard cache
+        if: always() && hashFiles('data/dashboard.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: data/dashboard.json
+          key: dashboard-${{ github.repository }}-${{ github.ref }}-${{ github.run_id }}
+
+      - name: Upload dashboard artifact
+        if: always() && hashFiles('data/dashboard.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard
+          path: data/dashboard.json
+          if-no-files-found: ignore
 
       - name: Upload log on failure
         if: failure()
@@ -92,6 +106,45 @@ jobs:
           name: monitor-log
           path: data/monitor.log
           if-no-files-found: ignore
+
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: monitor
+    if: always()
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download dashboard artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard
+          path: data
+        continue-on-error: true
+
+      - name: Restore dashboard cache fallback
+        if: hashFiles('data/dashboard.json') == ''
+        uses: actions/cache@v4
+        with:
+          path: data/dashboard.json
+          key: dashboard-${{ github.repository }}-${{ github.ref }}
+          restore-keys: |
+            dashboard-${{ github.repository }}-
+
+      - name: Build web dashboard
+        run: |
+          mkdir -p _site/data
+          cp web/*.html web/app.js web/styles.css _site/
+          if [ ! -f data/dashboard.json ]; then
+            echo '{"updated_at":"","lookback_days":365,"total":0,"new_total":0,"counts":{},"new_counts":{},"category_labels":{},"items":[]}' > _site/data/dashboard.json
+          else
+            cp data/dashboard.json _site/data/dashboard.json
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

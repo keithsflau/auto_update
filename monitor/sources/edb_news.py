@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import re
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 
 import requests
@@ -10,8 +11,11 @@ import requests
 from monitor.filters import classify_news_levels, is_education_news
 from monitor.models import UpdateItem
 from monitor.sources.hk_media_feeds import HK_MEDIA_FEEDS
-from monitor.state import normalize_text
+from monitor.state import log, normalize_text
 from monitor.text_util import parse_item_date
+
+FEED_TIMEOUT = 20
+FEED_WORKERS = 10
 
 SESSION = requests.Session()
 SESSION.headers.update(
@@ -111,33 +115,41 @@ def _build_summary(source: str, description: str, media_source: str = "") -> str
     return f"[{label}]"
 
 
+def _fetch_feed_rows(feed: dict) -> tuple[str, list[dict]]:
+    feed_key = str(feed["key"])
+    url = str(feed["url"])
+    try:
+        response = SESSION.get(url, timeout=FEED_TIMEOUT)
+        response.raise_for_status()
+        return feed_key, _parse_feed_items(response.content, feed_key=feed_key)
+    except (requests.RequestException, ET.ParseError) as exc:
+        log(f"新聞來源 {feed_key} 跳過: {exc.__class__.__name__}")
+        return feed_key, []
+
+
 def fetch_edb_news_items() -> list[UpdateItem]:
     cutoff = news_cutoff_date()
     raw_items: dict[str, dict] = {}
+    feed_by_key = {str(feed["key"]): feed for feed in HK_MEDIA_FEEDS}
 
-    for feed in HK_MEDIA_FEEDS:
-        feed_key = str(feed["key"])
-        source = str(feed["source"])
-        url = str(feed["url"])
-        education_only = bool(feed.get("education_only", False))
+    with ThreadPoolExecutor(max_workers=FEED_WORKERS) as pool:
+        futures = [pool.submit(_fetch_feed_rows, feed) for feed in HK_MEDIA_FEEDS]
+        for future in as_completed(futures):
+            feed_key, rows = future.result()
+            feed = feed_by_key[feed_key]
+            source = str(feed["source"])
+            education_only = bool(feed.get("education_only", False))
 
-        try:
-            response = SESSION.get(url, timeout=60)
-            response.raise_for_status()
-            rows = _parse_feed_items(response.content, feed_key=feed_key)
-        except (requests.RequestException, ET.ParseError):
-            continue
+            for row in rows:
+                blob = f"{row['title']} {row['summary']}"
+                if education_only and not is_education_news(blob):
+                    continue
 
-        for row in rows:
-            blob = f"{row['title']} {row['summary']}"
-            if education_only and not is_education_news(blob):
-                continue
-
-            row["source"] = source
-            row["level_hint"] = str(feed.get("level_hint") or "")
-            row["include_general"] = bool(feed.get("include_general", False))
-            row["summary"] = _build_summary(source, row["summary"], row.get("media_source", ""))
-            raw_items[row["id"]] = row
+                row["source"] = source
+                row["level_hint"] = str(feed.get("level_hint") or "")
+                row["include_general"] = bool(feed.get("include_general", False))
+                row["summary"] = _build_summary(source, row["summary"], row.get("media_source", ""))
+                raw_items[row["id"]] = row
 
     found: dict[str, UpdateItem] = {}
     seen_titles: set[str] = set()
