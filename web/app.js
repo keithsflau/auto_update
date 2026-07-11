@@ -1,11 +1,11 @@
-const CATEGORY_ORDER = [
-  "steam_primary",
-  "steam_secondary",
-  "tcs_teacher",
-  "news_primary",
-  "news_secondary",
-  "qef",
-  "edb_circular",
+const PAGES = [
+  { key: "steam_primary", file: "steam-primary.html", label: "STEAM 小學比賽" },
+  { key: "steam_secondary", file: "steam-secondary.html", label: "STEAM 中學比賽" },
+  { key: "tcs_teacher", file: "tcs.html", label: "教師培訓 (TCS)" },
+  { key: "news_primary", file: "news-primary.html", label: "小學新聞" },
+  { key: "news_secondary", file: "news-secondary.html", label: "中學新聞" },
+  { key: "qef", file: "qef.html", label: "優質教育基金 (QEF)" },
+  { key: "edb_circular", file: "edb.html", label: "教育局通函" },
 ];
 
 const CATEGORY_COLORS = {
@@ -19,16 +19,18 @@ const CATEGORY_COLORS = {
 };
 
 const isLocalServer = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const pageCategory = document.body.dataset.category || "";
+const pageTitle = document.body.dataset.title || "香港教育更新儀表板";
 
 let snapshot = null;
-let activeCategory = "all";
 let newOnly = false;
 let searchQuery = "";
 
 const els = {
   metaBar: document.getElementById("metaBar"),
-  statsGrid: document.getElementById("statsGrid"),
-  categoryTabs: document.getElementById("categoryTabs"),
+  pageNav: document.getElementById("pageNav"),
+  homeGrid: document.getElementById("homeGrid"),
+  pageStats: document.getElementById("pageStats"),
   cardsGrid: document.getElementById("cardsGrid"),
   loading: document.getElementById("loading"),
   emptyState: document.getElementById("emptyState"),
@@ -52,7 +54,28 @@ function formatTime(iso) {
 
 function setLoading(isLoading) {
   els.loading.classList.toggle("hidden", !isLoading);
-  els.refreshBtn.disabled = isLoading;
+  if (els.refreshBtn) els.refreshBtn.disabled = isLoading;
+}
+
+function renderPageNav() {
+  if (!els.pageNav) return;
+
+  const currentPath = window.location.pathname.split("/").pop() || "index.html";
+  els.pageNav.innerHTML = "";
+
+  const homeLink = document.createElement("a");
+  homeLink.href = "index.html";
+  homeLink.className = `page-nav-link${currentPath === "index.html" ? " active" : ""}`;
+  homeLink.textContent = "首頁";
+  els.pageNav.appendChild(homeLink);
+
+  PAGES.forEach((page) => {
+    const link = document.createElement("a");
+    link.href = page.file;
+    link.className = `page-nav-link${currentPath === page.file ? " active" : ""}`;
+    link.textContent = page.label;
+    els.pageNav.appendChild(link);
+  });
 }
 
 async function fetchData(refresh = false) {
@@ -78,70 +101,65 @@ async function fetchData(refresh = false) {
     render();
   } catch (error) {
     els.metaBar.textContent = `錯誤：${error.message}`;
-    els.cardsGrid.innerHTML = "";
+    if (els.cardsGrid) els.cardsGrid.innerHTML = "";
+    if (els.homeGrid) els.homeGrid.innerHTML = "";
     els.emptyState.classList.remove("hidden");
   } finally {
     setLoading(false);
   }
 }
 
-function renderStats() {
-  els.statsGrid.innerHTML = "";
-  const labels = snapshot.category_labels || {};
-
-  const allCard = document.createElement("button");
-  allCard.className = `stat-card${activeCategory === "all" ? " active" : ""}`;
-  allCard.innerHTML = `
-    <div class="stat-label">全部</div>
-    <div class="stat-value">${snapshot.total || 0}</div>
-    <div class="stat-new">${snapshot.new_total || 0} 項新資料</div>
-  `;
-  allCard.addEventListener("click", () => {
-    activeCategory = "all";
-    render();
-  });
-  els.statsGrid.appendChild(allCard);
-
-  CATEGORY_ORDER.forEach((key) => {
-    const card = document.createElement("button");
-    card.className = `stat-card${activeCategory === key ? " active" : ""}`;
-    const total = snapshot.counts?.[key] || 0;
-    const fresh = snapshot.new_counts?.[key] || 0;
-    card.innerHTML = `
-      <div class="stat-label">${labels[key] || key}</div>
-      <div class="stat-value">${total}</div>
-      <div class="stat-new">${fresh} 項新資料</div>
-    `;
-    card.addEventListener("click", () => {
-      activeCategory = key;
-      render();
-    });
-    els.statsGrid.appendChild(card);
-  });
+function getCategoryLabel(key) {
+  return (snapshot?.category_labels || {})[key] || key;
 }
 
-function renderTabs() {
+function renderHome() {
   const labels = snapshot.category_labels || {};
-  const tabs = [{ key: "all", label: "全部" }];
-  CATEGORY_ORDER.forEach((key) => tabs.push({ key, label: labels[key] || key }));
+  els.homeGrid.innerHTML = "";
 
-  els.categoryTabs.innerHTML = "";
-  tabs.forEach((tab) => {
-    const button = document.createElement("button");
-    button.className = `tab${activeCategory === tab.key ? " active" : ""}`;
-    button.textContent = tab.label;
-    button.addEventListener("click", () => {
-      activeCategory = tab.key;
-      render();
-    });
-    els.categoryTabs.appendChild(button);
+  PAGES.forEach((page) => {
+    const total = snapshot.counts?.[page.key] || 0;
+    const fresh = snapshot.new_counts?.[page.key] || 0;
+    const colors = CATEGORY_COLORS[page.key] || CATEGORY_COLORS.edb_circular;
+
+    const card = document.createElement("a");
+    card.href = page.file;
+    card.className = "home-card";
+    card.style.borderColor = colors.color;
+    card.innerHTML = `
+      <div class="home-card-label" style="color:${colors.color}">${labels[page.key] || page.label}</div>
+      <div class="home-card-value">${total}</div>
+      <div class="home-card-new">${fresh} 項新資料</div>
+      <div class="home-card-cta">進入 →</div>
+    `;
+    els.homeGrid.appendChild(card);
   });
+
+  const lookback = snapshot.lookback_days || 365;
+  const autoUpdate = isLocalServer ? "" : " · 每 6 小時自動更新";
+  els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內共 ${snapshot.total} 項${autoUpdate}`;
+}
+
+function renderPageStats() {
+  if (!els.pageStats) return;
+
+  const total = snapshot.counts?.[pageCategory] || 0;
+  const fresh = snapshot.new_counts?.[pageCategory] || 0;
+  const colors = CATEGORY_COLORS[pageCategory] || CATEGORY_COLORS.edb_circular;
+
+  els.pageStats.innerHTML = `
+    <div class="page-stat-card" style="border-color:${colors.color}">
+      <div class="page-stat-label" style="color:${colors.color}">${getCategoryLabel(pageCategory)}</div>
+      <div class="page-stat-value">${total}</div>
+      <div class="page-stat-new">${fresh} 項新資料</div>
+    </div>
+  `;
 }
 
 function filteredItems() {
-  let items = (snapshot.items || [])
+  return (snapshot.items || [])
     .filter((item) => {
-      if (activeCategory !== "all" && item.category !== activeCategory) return false;
+      if (item.category !== pageCategory) return false;
       if (newOnly && !item.is_new) return false;
       if (!searchQuery) return true;
       const blob = `${item.title} ${item.summary} ${item.category_label} ${item.subcategory_label || ""}`.toLowerCase();
@@ -153,22 +171,11 @@ function filteredItems() {
       if (dateA !== dateB) return dateB.localeCompare(dateA);
       return (a.title || "").localeCompare(b.title || "", "zh-HK");
     });
-
-  if (activeCategory === "all") {
-    const seenNews = new Set();
-    items = items.filter((item) => {
-      if (!item.category.startsWith("news_")) return true;
-      const key = `${item.title}||${item.url}`;
-      if (seenNews.has(key)) return false;
-      seenNews.add(key);
-      return true;
-    });
-  }
-
-  return items;
 }
 
 function renderCards(items) {
+  if (!els.cardsGrid) return;
+
   els.cardsGrid.innerHTML = "";
   els.emptyState.classList.toggle("hidden", items.length > 0);
 
@@ -212,27 +219,51 @@ function renderCards(items) {
   });
 }
 
+function renderCategoryPage() {
+  const items = filteredItems();
+  const lookback = snapshot.lookback_days || 365;
+  const autoUpdate = isLocalServer ? "" : " · 每 6 小時自動更新";
+  els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內 ${items.length} 項 · 按日期由近到遠排列${autoUpdate}`;
+  renderPageStats();
+  renderCards(items);
+}
+
 function render() {
   if (!snapshot) return;
 
-  const lookback = snapshot.lookback_days || 365;
-  const autoUpdate = isLocalServer ? "" : " · 每 6 小時自動更新 · TCS 每日電郵";
-  els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內 ${snapshot.total} 項 · ${snapshot.new_total} 項新資料 · 按日期由近到遠排列${autoUpdate}`;
-  renderStats();
-  renderTabs();
-  renderCards(filteredItems());
+  renderPageNav();
+
+  if (!pageCategory) {
+    renderHome();
+    return;
+  }
+
+  renderCategoryPage();
 }
 
-els.refreshBtn.addEventListener("click", () => fetchData(true));
-els.searchInput.addEventListener("input", (event) => {
-  searchQuery = event.target.value.trim().toLowerCase();
-  renderCards(filteredItems());
-  els.emptyState.classList.toggle("hidden", filteredItems().length > 0);
-});
-els.newOnly.addEventListener("change", (event) => {
-  newOnly = event.target.checked;
-  renderCards(filteredItems());
-  els.emptyState.classList.toggle("hidden", filteredItems().length > 0);
-});
+if (els.refreshBtn) {
+  els.refreshBtn.addEventListener("click", () => fetchData(true));
+}
+if (els.searchInput) {
+  els.searchInput.addEventListener("input", (event) => {
+    searchQuery = event.target.value.trim().toLowerCase();
+    renderCards(filteredItems());
+    els.emptyState.classList.toggle("hidden", filteredItems().length > 0);
+  });
+}
+if (els.newOnly) {
+  els.newOnly.addEventListener("change", (event) => {
+    newOnly = event.target.checked;
+    renderCards(filteredItems());
+    els.emptyState.classList.toggle("hidden", filteredItems().length > 0);
+  });
+}
 
+document.title = pageCategory ? `${pageTitle} · 香港教育更新` : "香港教育更新儀表板";
+const heading = document.getElementById("pageHeading");
+if (heading && pageCategory) {
+  heading.textContent = pageTitle;
+}
+
+renderPageNav();
 fetchData(false);

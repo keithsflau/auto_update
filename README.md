@@ -24,6 +24,19 @@ python -m monitor.main
 **線上版（GitHub Pages，每 6 小時自動更新）：**  
 https://keithsflau.github.io/auto_update/
 
+七個分類獨立頁面：
+
+| 頁面 | 網址 |
+|------|------|
+| 首頁 | `/index.html` |
+| STEAM 小學比賽 | `/steam-primary.html` |
+| STEAM 中學比賽 | `/steam-secondary.html` |
+| 教師培訓 (TCS) | `/tcs.html` |
+| 小學新聞 | `/news-primary.html` |
+| 中學新聞 | `/news-secondary.html` |
+| QEF | `/qef.html` |
+| 教育局通函 | `/edb.html` |
+
 **本機版：**
 
 ```bash

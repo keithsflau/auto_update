@@ -13,48 +13,27 @@
         <div>
           <p class="eyebrow">Hong Kong Education Monitor</p>
           <h1>香港教育更新儀表板</h1>
-          <p class="subtitle">STEAM 比賽 · 教師培訓 · 中小學新聞 · QEF · 教育局通函</p>
+          <p class="subtitle">七個分類獨立頁面 · STEAM · 教師培訓 · 新聞 · QEF · 通函</p>
         </div>
         <div class="header-actions">
-          <label class="toggle">
-            <input type="checkbox" id="newOnly" />
-            <span>只顯示新資料</span>
-          </label>
           <button class="btn btn-primary" id="refreshBtn" title="本機模式會重新擷取；GitHub Pages 會重新載入快取資料">重新整理</button>
         </div>
       </div>
+      <nav class="page-nav" id="pageNav"></nav>
       <div class="meta" id="metaBar">載入中…</div>
-      <div class="stats" id="statsGrid"></div>
-      <div class="toolbar">
-        <input type="search" id="searchInput" placeholder="搜尋標題、摘要…" />
-        <div class="tabs" id="categoryTabs"></div>
-      </div>
+      <section class="home-grid" id="homeGrid"></section>
     </header>
 
     <main>
       <div class="loading hidden" id="loading">
         <div class="spinner"></div>
-        <p>正在擷取最新資料，約需 20–60 秒…</p>
+        <p>正在載入資料…</p>
       </div>
       <div class="empty hidden" id="emptyState">
         <p>沒有符合條件的項目</p>
       </div>
-      <section class="cards" id="cardsGrid"></section>
     </main>
   </div>
-
-  <template id="cardTemplate">
-    <article class="card">
-      <div class="card-head">
-        <span class="badge category-badge"></span>
-        <span class="badge subcategory-badge hidden"></span>
-        <span class="badge new-badge hidden">新</span>
-      </div>
-      <h2 class="card-title"><a target="_blank" rel="noopener"></a></h2>
-      <p class="card-date"></p>
-      <p class="card-summary"></p>
-    </article>
-  </template>
 
   <script src="app.js"></script>
 </body>

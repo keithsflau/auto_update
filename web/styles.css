@@ -102,6 +102,117 @@ h1 {
   font-size: 14px;
 }
 
+.page-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.page-nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.page-nav-link:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.page-nav-link.active {
+  background: var(--text);
+  color: white;
+  border-color: var(--text);
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.home-card {
+  display: block;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(21, 34, 56, 0.12);
+}
+
+.home-card-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.home-card-value {
+  margin-top: 10px;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.home-card-new {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--new);
+  font-weight: 700;
+}
+
+.home-card-cta {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.page-stats {
+  margin-top: 16px;
+}
+
+.page-stat-card {
+  display: inline-block;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  box-shadow: var(--shadow);
+}
+
+.page-stat-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.page-stat-value {
+  margin-top: 8px;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.page-stat-new {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--new);
+  font-weight: 700;
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

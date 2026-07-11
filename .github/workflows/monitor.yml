@@ -82,7 +82,7 @@ jobs:
       - name: Build web dashboard
         run: |
           mkdir -p _site/data
-          cp web/index.html web/app.js web/styles.css _site/
+          cp web/*.html web/app.js web/styles.css _site/
           cp data/dashboard.json _site/data/dashboard.json
 
       - name: Upload log on failure
