@@ -195,7 +195,69 @@ def classify_tcs_subcategory(title: str, course_id: str = "") -> str:
     return "other"
 
 
-def classify_news_levels(title: str, summary: str = "") -> list[str]:
+EDUCATION_NEWS_KEYWORDS = (
+    r"教育",
+    r"學校",
+    r"中小學",
+    r"小學",
+    r"中學",
+    r"學生",
+    r"教師",
+    r"老師",
+    r"校園",
+    r"教育局",
+    r"課程",
+    r"考試",
+    r"dse",
+    r"文憑",
+    r"幼稚園",
+    r"幼兒",
+    r"升學",
+    r"家長",
+    r"學界",
+    r"校長",
+    r"校舍",
+    r"學位",
+    r"放榜",
+    r"開學",
+    r"校巴",
+    r"補習",
+    r"私立學校",
+    r"資助學校",
+    r"官立",
+    r"直資",
+    r"國際學校",
+    r"banding",
+    r"學術",
+    r"校網",
+    r"選校",
+    r"統一派位",
+    r"自行分配",
+    r"education",
+    r"school",
+    r"university",
+    r"college",
+    r"student",
+    r"teacher",
+)
+
+
+def is_education_news(text: str) -> bool:
+    return _matches_any(text, EDUCATION_NEWS_KEYWORDS)
+
+
+def classify_news_levels(
+    title: str,
+    summary: str = "",
+    *,
+    level_hint: str | None = None,
+    include_general: bool = False,
+) -> list[str]:
+    if level_hint == "primary":
+        return ["news_primary"]
+    if level_hint == "secondary":
+        return ["news_secondary"]
+
     blob = " ".join([title, summary])
     primary = is_primary_level(blob)
     secondary = is_secondary_level(blob)
@@ -204,6 +266,8 @@ def classify_news_levels(title: str, summary: str = "") -> list[str]:
         levels.append("news_primary")
     if secondary:
         levels.append("news_secondary")
-    if not levels:
-        levels = ["news_primary", "news_secondary"]
-    return levels
+    if levels:
+        return levels
+    if include_general:
+        return ["news_primary", "news_secondary"]
+    return []

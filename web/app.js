@@ -139,7 +139,7 @@ function renderTabs() {
 }
 
 function filteredItems() {
-  return (snapshot.items || [])
+  let items = (snapshot.items || [])
     .filter((item) => {
       if (activeCategory !== "all" && item.category !== activeCategory) return false;
       if (newOnly && !item.is_new) return false;
@@ -153,6 +153,19 @@ function filteredItems() {
       if (dateA !== dateB) return dateB.localeCompare(dateA);
       return (a.title || "").localeCompare(b.title || "", "zh-HK");
     });
+
+  if (activeCategory === "all") {
+    const seenNews = new Set();
+    items = items.filter((item) => {
+      if (!item.category.startsWith("news_")) return true;
+      const key = `${item.title}||${item.url}`;
+      if (seenNews.has(key)) return false;
+      seenNews.add(key);
+      return true;
+    });
+  }
+
+  return items;
 }
 
 function renderCards(items) {
