@@ -54,8 +54,11 @@ def run(force_notify: bool = False, dry_run: bool = False) -> int:
         log("首次執行：已記錄現有項目，不發送通知（可在 .env 設 INITIAL_RUN_NOTIFY=true）")
 
     if should_notify and not dry_run:
-        sent = notify_items(new_items)
-        log(f"已發送 {sent} 則通知")
+        try:
+            sent = notify_items(new_items)
+            log(f"已發送 {sent} 則通知")
+        except Exception as exc:  # noqa: BLE001
+            log(f"通知發送失敗（已略過）：{exc}")
     elif dry_run and new_items:
         for item in new_items:
             log(f"[DRY RUN] {item.category} | {item.title} | {item.url}")

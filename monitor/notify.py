@@ -26,6 +26,16 @@ from monitor.config import (
 from monitor.models import UpdateItem
 from monitor.state import log
 
+NOTIFY_BATCH_SIZE = 5
+NOTIFY_MAX_MESSAGE_CHARS = 1800
+SITE_URL = "https://keithsflau.github.io/auto_update/"
+
+
+def _truncate_message(message: str, limit: int = NOTIFY_MAX_MESSAGE_CHARS) -> str:
+    if len(message) <= limit:
+        return message
+    return message[: limit - 20].rstrip() + "\n…（訊息已截短）"
+
 
 def format_message(item: UpdateItem) -> str:
     label = CATEGORY_LABELS.get(item.category, item.category)
@@ -39,7 +49,7 @@ def format_message(item: UpdateItem) -> str:
         lines.append(f"摘要：{item.summary[:300]}")
     if item.url:
         lines.append(f"連結：{item.url}")
-    return "\n".join(lines)
+    return _truncate_message("\n".join(lines))
 
 
 def send_notification(message: str) -> list[str]:
@@ -48,6 +58,7 @@ def send_notification(message: str) -> list[str]:
             "請在 .env 設定 NOTIFY_CHANNELS，例如：telegram 或 telegram,email"
         )
 
+    message = _truncate_message(message)
     sent: list[str] = []
     errors: list[str] = []
 
@@ -163,21 +174,17 @@ def _send_twilio(message: str) -> None:
     response.raise_for_status()
 
 
-NOTIFY_BATCH_SIZE = 20
-
-
 def _format_batch_message(items: list[UpdateItem], *, total: int) -> str:
-    lines = [f"🔔 香港教育更新 — 共 {total} 項新更新", ""]
+    lines = [f"🔔 香港教育更新 — 共 {total} 項新更新", f"完整清單：{SITE_URL}", ""]
     for item in items:
         label = CATEGORY_LABELS.get(item.category, item.category)
-        lines.append(f"• [{label}] {item.title}")
-        if item.url:
-            lines.append(f"  {item.url}")
+        title = item.title if len(item.title) <= 120 else item.title[:117] + "…"
+        lines.append(f"• [{label}] {title}")
     remaining = total - len(items)
     if remaining > 0:
         lines.append("")
-        lines.append(f"… 另有 {remaining} 項，請到網頁查看完整清單。")
-    return "\n".join(lines)
+        lines.append(f"… 另有 {remaining} 項，請到網頁查看。")
+    return _truncate_message("\n".join(lines))
 
 
 def notify_items(items: list[UpdateItem]) -> int:
