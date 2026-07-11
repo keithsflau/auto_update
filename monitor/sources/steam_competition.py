@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
@@ -59,14 +60,24 @@ def _parse_rss_items(xml_text: str) -> list[dict]:
     return items
 
 
+def _fetch_circular_html_safe(fetcher) -> str | None:
+    try:
+        return fetcher()
+    except requests.RequestException:
+        return None
+
+
 def _collect_circulars() -> list[dict]:
     merged: dict[str, dict] = {}
-    html_sources = [fetch_circular_html()]
-    for keyword in EDB_SEARCH_KEYWORDS:
-        try:
-            html_sources.append(fetch_circular_keyword_html(keyword))
-        except requests.RequestException:
-            continue
+    fetchers = [fetch_circular_html, *[lambda kw=kw: fetch_circular_keyword_html(kw) for kw in EDB_SEARCH_KEYWORDS]]
+    html_sources: list[str] = []
+
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = [pool.submit(_fetch_circular_html_safe, fetcher) for fetcher in fetchers]
+        for future in as_completed(futures):
+            html = future.result()
+            if html:
+                html_sources.append(html)
 
     for html in html_sources:
         for circular in parse_circulars(html):

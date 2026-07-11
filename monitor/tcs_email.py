@@ -4,7 +4,12 @@ from collections import defaultdict
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from monitor.config import TCS_DAILY_EMAIL_ENABLED, TCS_DAILY_EMAIL_TO
+from monitor.config import (
+    EMAIL_SMTP_PASSWORD,
+    EMAIL_SMTP_USER,
+    TCS_DAILY_EMAIL_ENABLED,
+    TCS_DAILY_EMAIL_TO,
+)
 from monitor.filters import TCS_SUBCATEGORY_LABELS
 from monitor.models import UpdateItem
 from monitor.notify import send_email_to
@@ -93,6 +98,9 @@ def maybe_send_tcs_daily_email(
     dry_run: bool = False,
 ) -> bool:
     if not TCS_DAILY_EMAIL_ENABLED or not TCS_DAILY_EMAIL_TO:
+        return False
+    if not EMAIL_SMTP_USER or not EMAIL_SMTP_PASSWORD:
+        log("TCS 每日電郵略過：未設定 EMAIL_SMTP_USER / EMAIL_SMTP_PASSWORD")
         return False
 
     today = _today_hk()

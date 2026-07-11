@@ -163,10 +163,37 @@ def _send_twilio(message: str) -> None:
     response.raise_for_status()
 
 
-def notify_items(items: list[UpdateItem]) -> int:
-    sent = 0
+NOTIFY_BATCH_SIZE = 20
+
+
+def _format_batch_message(items: list[UpdateItem], *, total: int) -> str:
+    lines = [f"🔔 香港教育更新 — 共 {total} 項新更新", ""]
     for item in items:
-        channels = send_notification(format_message(item))
-        log(f"已透過 {', '.join(channels)} 發送：{item.title[:60]}")
-        sent += 1
-    return sent
+        label = CATEGORY_LABELS.get(item.category, item.category)
+        lines.append(f"• [{label}] {item.title}")
+        if item.url:
+            lines.append(f"  {item.url}")
+    remaining = total - len(items)
+    if remaining > 0:
+        lines.append("")
+        lines.append(f"… 另有 {remaining} 項，請到網頁查看完整清單。")
+    return "\n".join(lines)
+
+
+def notify_items(items: list[UpdateItem]) -> int:
+    if not items:
+        return 0
+
+    total = len(items)
+    if total <= NOTIFY_BATCH_SIZE:
+        sent = 0
+        for item in items:
+            channels = send_notification(format_message(item))
+            log(f"已透過 {', '.join(channels)} 發送：{item.title[:60]}")
+            sent += 1
+        return sent
+
+    preview = sorted(items, key=lambda item: (item.category, item.title))[:NOTIFY_BATCH_SIZE]
+    channels = send_notification(_format_batch_message(preview, total=total))
+    log(f"已透過 {', '.join(channels)} 發送摘要（{total} 項，顯示 {len(preview)} 項）")
+    return total

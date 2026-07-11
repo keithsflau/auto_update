@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from urllib.parse import urljoin
 
@@ -90,7 +91,7 @@ class HkCompetition:
 
 
 def _fetch(url: str) -> str:
-    response = SESSION.get(url, timeout=45)
+    response = SESSION.get(url, timeout=25)
     response.raise_for_status()
     return response.text
 
@@ -301,27 +302,33 @@ def _dedupe(items: list[HkCompetition]) -> list[HkCompetition]:
     return unique
 
 
+def _fetch_page_competitions(url: str, parser: str, level_hint: str | None) -> list[HkCompetition]:
+    html = _fetch(url)
+    if parser == "eduai":
+        return _parse_eduai(html)
+    if parser == "hknetea":
+        return _parse_hknetea(html, url)
+    if parser == "sic_programmes":
+        return _parse_sic_programmes(html, url)
+    if parser == "wro_hub":
+        return _parse_wro_hub(html, url)
+    return _parse_page_competition(html, url, level_hint)
+
+
 def fetch_hk_competitions() -> list[HkCompetition]:
     found: dict[str, HkCompetition] = {}
 
-    for url, parser, level_hint in CURATED_PAGES:
-        try:
-            html = _fetch(url)
-            parsed: list[HkCompetition]
-            if parser == "eduai":
-                parsed = _parse_eduai(html)
-            elif parser == "hknetea":
-                parsed = _parse_hknetea(html, url)
-            elif parser == "sic_programmes":
-                parsed = _parse_sic_programmes(html, url)
-            elif parser == "wro_hub":
-                parsed = _parse_wro_hub(html, url)
-            else:
-                parsed = _parse_page_competition(html, url, level_hint)
-
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = {
+            pool.submit(_fetch_page_competitions, url, parser, level_hint): (url, parser)
+            for url, parser, level_hint in CURATED_PAGES
+        }
+        for future in as_completed(futures):
+            try:
+                parsed = future.result()
+            except requests.RequestException:
+                continue
             for item in parsed:
                 found[item.item_id] = item
-        except requests.RequestException:
-            continue
 
     return list(found.values())

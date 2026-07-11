@@ -14,6 +14,7 @@ SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": USER_AGENT})
 
 CIRCULAR_BASE = "https://applications.edb.gov.hk/circular/"
+CIRCULAR_TIMEOUT = 30
 
 
 def _hidden_fields(html: str) -> dict[str, str]:
@@ -28,7 +29,7 @@ def _hidden_fields(html: str) -> dict[str, str]:
 
 def fetch_circular_keyword_html(keyword: str) -> str:
     url = "https://applications.edb.gov.hk/circular/circular.aspx?langno=2"
-    html = SESSION.get(url, timeout=60).text
+    html = SESSION.get(url, timeout=CIRCULAR_TIMEOUT).text
     payload = _hidden_fields(html)
     payload.update(
         {
@@ -41,14 +42,14 @@ def fetch_circular_keyword_html(keyword: str) -> str:
             "ctl00$MainContentPlaceHolder$btnSearch2": "搜尋",
         }
     )
-    return SESSION.post(url, data=payload, timeout=60).text
+    return SESSION.post(url, data=payload, timeout=CIRCULAR_TIMEOUT).text
 
 
 def fetch_circular_html(lookback_days: int | None = None) -> str:
     lookback = lookback_days or EDB_CIRCULAR_LOOKBACK_DAYS
     issue_day = "issueDayButton2" if lookback <= 7 else "issueDayButton1"
     url = "https://applications.edb.gov.hk/circular/circular.aspx?langno=2"
-    html = SESSION.get(url, timeout=60).text
+    html = SESSION.get(url, timeout=CIRCULAR_TIMEOUT).text
     payload = _hidden_fields(html)
     payload.update(
         {
@@ -57,7 +58,7 @@ def fetch_circular_html(lookback_days: int | None = None) -> str:
             "ctl00$MainContentPlaceHolder$btnSearch": "搜尋",
         }
     )
-    return SESSION.post(url, data=payload, timeout=60).text
+    return SESSION.post(url, data=payload, timeout=CIRCULAR_TIMEOUT).text
 
 
 def parse_circulars(html: str) -> list[dict]:
