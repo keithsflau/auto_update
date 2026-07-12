@@ -2,59 +2,11 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>STEAM 中學比賽</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta http-equiv="refresh" content="0; url=competitions.html#steam" />
+  <title>學界比賽</title>
+  <script>location.replace("competitions.html#steam");</script>
 </head>
-<body data-category="steam_secondary" data-title="STEAM 中學比賽">
-  <div class="page">
-    <header class="header">
-      <div class="header-top">
-        <div>
-          <p class="eyebrow">Hong Kong Education Monitor</p>
-          <h1 id="pageHeading">STEAM 中學比賽</h1>
-        </div>
-        <div class="header-actions">
-          <label class="toggle">
-            <input type="checkbox" id="newOnly" />
-            <span>只顯示新資料</span>
-          </label>
-          <button class="btn btn-primary" id="refreshBtn">重新整理</button>
-        </div>
-      </div>
-      <nav class="page-nav" id="pageNav"></nav>
-      <div class="meta" id="metaBar">載入中…</div>
-      <div class="page-stats" id="pageStats"></div>
-      <div class="toolbar">
-        <input type="search" id="searchInput" placeholder="搜尋標題、摘要…" />
-      </div>
-    </header>
-
-    <main>
-      <div class="loading hidden" id="loading">
-        <div class="spinner"></div>
-        <p>正在載入資料…</p>
-      </div>
-      <div class="empty hidden" id="emptyState">
-        <p>沒有符合條件的項目</p>
-      </div>
-      <section class="cards" id="cardsGrid"></section>
-    </main>
-  </div>
-
-  <template id="cardTemplate">
-    <article class="card">
-      <div class="card-head">
-        <span class="badge category-badge"></span>
-        <span class="badge subcategory-badge hidden"></span>
-        <span class="badge new-badge hidden">新</span>
-      </div>
-      <h2 class="card-title"><a target="_blank" rel="noopener"></a></h2>
-      <p class="card-date"></p>
-      <p class="card-summary"></p>
-    </article>
-  </template>
-
-  <script src="app.js"></script>
+<body>
+  <p>正在前往 <a href="competitions.html#steam">學界比賽</a>…</p>
 </body>
 </html>
