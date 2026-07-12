@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from monitor.config import USER_AGENT
-from monitor.filters import classify_tcs_subcategory, is_tcs_teacher_course
+from monitor.filters import classify_tcs_subcategory
 from monitor.models import UpdateItem
 from monitor.state import normalize_text
 
@@ -46,10 +46,11 @@ def _parse_tcs_html(html: str) -> list[dict]:
     return courses
 
 
-TCS_URL = (
+TCS_BASE_URL = (
     "https://tcs.edb.gov.hk/tcs/portal/publiccalendar/searchPublicCal/search.htm"
-    "?fromMenu=Y&pdType=2"
+    "?fromMenu=Y&pdType={pd_type}"
 )
+TCS_PD_TYPES = ("1", "2")
 DIGITAL_EDU_URL = (
     "https://www.edb.gov.hk/tc/edu-system/primary-secondary/"
     "applicable-to-primary-secondary/it-in-edu/pdp-ited.html"
@@ -82,26 +83,23 @@ def _parse_pdp_ited_html(html: str) -> list[dict]:
 def fetch_tcs_teacher_items() -> list[UpdateItem]:
     items: dict[str, UpdateItem] = {}
 
-    try:
-        tcs_html = _fetch_html(TCS_URL)
-        for course in _parse_tcs_html(tcs_html):
-            if not is_tcs_teacher_course(course["title"], course["course_id"]):
-                continue
-            items[course["course_id"]] = UpdateItem(
-                category="tcs_teacher",
-                item_id=course["course_id"],
-                title=course["title"],
-                url=course["url"],
-                subcategory=classify_tcs_subcategory(course["title"], course["course_id"]),
-            )
-    except requests.RequestException:
-        pass
+    for pd_type in TCS_PD_TYPES:
+        try:
+            tcs_html = _fetch_html(TCS_BASE_URL.format(pd_type=pd_type))
+            for course in _parse_tcs_html(tcs_html):
+                items[course["course_id"]] = UpdateItem(
+                    category="tcs_teacher",
+                    item_id=course["course_id"],
+                    title=course["title"],
+                    url=course["url"],
+                    subcategory=classify_tcs_subcategory(course["title"], course["course_id"]),
+                )
+        except requests.RequestException:
+            continue
 
     try:
         pdp_html = _fetch_html(DIGITAL_EDU_URL)
         for course in _parse_pdp_ited_html(pdp_html):
-            if not is_tcs_teacher_course(course["title"], course["course_id"]):
-                continue
             items[course["course_id"]] = UpdateItem(
                 category="tcs_teacher",
                 item_id=course["course_id"],
