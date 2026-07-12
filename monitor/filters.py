@@ -129,11 +129,170 @@ def is_secondary_level(text: str) -> bool:
     return _matches_any(text, SECONDARY_KEYWORDS)
 
 
-def classify_steam_competition(title: str, summary: str = "", school_types: str = "") -> list[str]:
+COMPETITION_TYPE_LABELS = {
+    "steam": "STEAM / 創科",
+    "science": "科學 / 數學",
+    "arts": "藝術 / 文化",
+    "sports": "體育",
+    "language": "語文 / 辯論",
+    "social": "公民 / 服務",
+    "general": "其他比賽",
+}
+
+SCHOLARSHIP_TYPE_LABELS = {
+    "primary": "小學",
+    "secondary": "中學",
+    "university": "升學 / 大專",
+    "general": "其他獎學金",
+}
+
+LEVEL_LABELS = {
+    "primary": "小學",
+    "secondary": "中學",
+    "both": "小學及中學",
+}
+
+STUDENT_CONTEXT_KEYWORDS = (
+    r"學生",
+    r"學界",
+    r"學校",
+    r"小學",
+    r"中學",
+    r"青少年",
+    r"香港",
+    r"校本",
+    r"校際",
+    r"同學",
+    r"學員",
+    r"參賽",
+)
+
+COMPETITION_NOISE_KEYWORDS = (
+    r"職業賽",
+    r"世界盃",
+    r"英超",
+    r"奧運代表",
+    r"車手",
+    r"賽車",
+    r"演唱會",
+    r"票房",
+    r"藝人",
+    r"明星",
+    r"選美",
+)
+
+SCHOLARSHIP_KEYWORDS = (
+    r"獎學金",
+    r"助學金",
+    r"scholarship",
+    r"資助計劃",
+    r"獎助學金",
+    r"獎助金",
+    r"助學",
+    r"全額資助",
+    r"免費修讀",
+    r"資助額",
+    r"申請資助",
+)
+
+COMPETITION_TYPE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        "steam",
+        (
+            r"steam",
+            r"stem",
+            r"編程",
+            r"機械人",
+            r"人工智能",
+            r"\bai\b",
+            r"創科",
+            r"創新科技",
+            r"科普",
+            r"資訊科技",
+            r"運算思維",
+        ),
+    ),
+    (
+        "science",
+        (r"科學", r"數學", r"奧數", r"物理", r"化學", r"生物", r"天文", r"科研", r"實驗"),
+    ),
+    (
+        "arts",
+        (
+            r"藝術",
+            r"音樂",
+            r"視覺",
+            r"朗誦",
+            r"朗讀",
+            r"話劇",
+            r"舞蹈",
+            r"書法",
+            r"攝影",
+            r"設計",
+            r"繪畫",
+            r"合唱",
+        ),
+    ),
+    ("sports", (r"體育", r"運動", r"田徑", r"游泳", r"足球", r"籃球", r"排球", r"羽毛球", r"乒乓球", r"馬拉松")),
+    (
+        "language",
+        (r"英文", r"語文", r"普通話", r"寫作", r"辯論", r"演講", r"朗誦", r"閱讀", r"作文"),
+    ),
+    ("social", (r"公民", r"社會服務", r"德育", r"公益", r"關愛", r"義工", r"環保", r"社創")),
+)
+
+
+def is_student_competition(text: str, *, trusted_source: bool = False) -> bool:
+    if is_non_education_noise(text) or _matches_any(text, COMPETITION_NOISE_KEYWORDS):
+        return False
+    if not _matches_any(text, COMPETITION_KEYWORDS):
+        return False
+    if trusted_source:
+        return True
+    return _matches_any(text, STUDENT_CONTEXT_KEYWORDS)
+
+
+def classify_competition_type(title: str, summary: str = "") -> str:
+    blob = " ".join([title, summary])
+    for key, patterns in COMPETITION_TYPE_RULES:
+        if _matches_any(blob, patterns):
+            return key
+    return "general"
+
+
+def classify_school_level(title: str, summary: str = "", school_types: str = "") -> str:
     blob = " ".join([title, summary, school_types])
-    if not is_steam_competition(blob):
-        return []
-    return _split_by_school_level(blob)
+    primary = is_primary_level(blob)
+    secondary = is_secondary_level(blob)
+    if primary and secondary:
+        return "both"
+    if primary:
+        return "primary"
+    if secondary:
+        return "secondary"
+    return ""
+
+
+def is_scholarship_opportunity(text: str) -> bool:
+    if is_non_education_noise(text):
+        return False
+    if not _matches_any(text, SCHOLARSHIP_KEYWORDS):
+        return False
+    return _matches_any(text, STUDENT_CONTEXT_KEYWORDS) or _matches_any(
+        text,
+        (r"升學", r"大學", r"教育", r"學生", r"學校", r"香港"),
+    )
+
+
+def classify_scholarship_level(title: str, summary: str = "") -> str:
+    blob = " ".join([title, summary])
+    if _matches_any(blob, (r"大學", r"升學", r"大專", r"degree", r"university", r"本科")):
+        return "university"
+    if is_secondary_level(blob):
+        return "secondary"
+    if is_primary_level(blob):
+        return "primary"
+    return "general"
 
 
 def is_tcs_teacher_course(title: str, course_id: str = "") -> bool:

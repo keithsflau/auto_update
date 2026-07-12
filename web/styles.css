@@ -133,14 +133,16 @@ h1 {
   border-color: var(--text);
 }
 
-.tcs-tabs {
+.tcs-tabs,
+.subcategory-tabs {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 14px;
 }
 
-.tcs-tab {
+.tcs-tab,
+.subcategory-tab {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -155,18 +157,21 @@ h1 {
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
-.tcs-tab:hover {
-  border-color: #6d28d9;
-  color: #6d28d9;
+.tcs-tab:hover,
+.subcategory-tab:hover {
+  border-color: var(--tab-accent, #6d28d9);
+  color: var(--tab-accent, #6d28d9);
 }
 
-.tcs-tab.active {
-  background: #6d28d9;
+.tcs-tab.active,
+.subcategory-tab.active {
+  background: var(--tab-accent, #6d28d9);
   color: white;
-  border-color: #6d28d9;
+  border-color: var(--tab-accent, #6d28d9);
 }
 
-.tcs-tab-count {
+.tcs-tab-count,
+.subcategory-tab-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -179,8 +184,14 @@ h1 {
   font-weight: 700;
 }
 
-.tcs-tab.active .tcs-tab-count {
+.tcs-tab.active .tcs-tab-count,
+.subcategory-tab.active .subcategory-tab-count {
   background: rgba(255, 255, 255, 0.18);
+}
+
+.level-badge {
+  background: #ecfeff;
+  color: #0e7490;
 }
 
 .home-grid {

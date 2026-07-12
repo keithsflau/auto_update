@@ -1,6 +1,6 @@
 const PAGES = [
-  { key: "steam_primary", file: "steam-primary.html", label: "STEAM 小學比賽" },
-  { key: "steam_secondary", file: "steam-secondary.html", label: "STEAM 中學比賽" },
+  { key: "competition", file: "competitions.html", label: "學界比賽" },
+  { key: "scholarship", file: "scholarships.html", label: "獎學金申請" },
   { key: "tcs_teacher", file: "tcs.html", label: "教師培訓 (TCS)" },
   { key: "news_primary", file: "news-primary.html", label: "小學新聞" },
   { key: "news_secondary", file: "news-secondary.html", label: "中學新聞" },
@@ -9,8 +9,8 @@ const PAGES = [
 ];
 
 const CATEGORY_COLORS = {
-  steam_primary: { bg: "#eefaf3", color: "#0f7a4c" },
-  steam_secondary: { bg: "#eef6ff", color: "#1f5eff" },
+  competition: { bg: "#eefaf3", color: "#0f7a4c" },
+  scholarship: { bg: "#fff7ed", color: "#c2410c" },
   tcs_teacher: { bg: "#f6f0ff", color: "#6d28d9" },
   news_primary: { bg: "#fff1f2", color: "#be123c" },
   news_secondary: { bg: "#eff6ff", color: "#1d4ed8" },
@@ -18,27 +18,62 @@ const CATEGORY_COLORS = {
   edb_circular: { bg: "#f8fafc", color: "#334155" },
 };
 
-const TCS_TABS = [
-  { key: "", label: "全部" },
-  { key: "steam", label: "STEAM" },
-  { key: "ai", label: "AI" },
-  { key: "admin", label: "行政" },
-  { key: "self_review", label: "自評" },
-  { key: "exchange", label: "交流團" },
-  { key: "guidance", label: "訓輔導" },
-  { key: "promotion", label: "晉升" },
-  { key: "other", label: "其他" },
-];
+const TAB_CONFIGS = {
+  tcs: {
+    category: "tcs_teacher",
+    accent: "#6d28d9",
+    fallback: "other",
+    tabs: [
+      { key: "", label: "全部" },
+      { key: "steam", label: "STEAM" },
+      { key: "ai", label: "AI" },
+      { key: "admin", label: "行政" },
+      { key: "self_review", label: "自評" },
+      { key: "exchange", label: "交流團" },
+      { key: "guidance", label: "訓輔導" },
+      { key: "promotion", label: "晉升" },
+      { key: "other", label: "其他" },
+    ],
+  },
+  competition: {
+    category: "competition",
+    accent: "#0f7a4c",
+    fallback: "general",
+    tabs: [
+      { key: "", label: "全部" },
+      { key: "steam", label: "STEAM / 創科" },
+      { key: "science", label: "科學 / 數學" },
+      { key: "arts", label: "藝術 / 文化" },
+      { key: "sports", label: "體育" },
+      { key: "language", label: "語文 / 辯論" },
+      { key: "social", label: "公民 / 服務" },
+      { key: "general", label: "其他比賽" },
+    ],
+  },
+  scholarship: {
+    category: "scholarship",
+    accent: "#c2410c",
+    fallback: "general",
+    tabs: [
+      { key: "", label: "全部" },
+      { key: "secondary", label: "中學" },
+      { key: "primary", label: "小學" },
+      { key: "university", label: "升學 / 大專" },
+      { key: "general", label: "其他獎學金" },
+    ],
+  },
+};
 
 const isLocalServer = ["localhost", "127.0.0.1"].includes(window.location.hostname);
 const pageCategory = document.body.dataset.category || "";
 const pageTitle = document.body.dataset.title || "香港教育更新儀表板";
-const hasTcsTabs = document.body.dataset.tabs === "tcs";
+const tabMode = document.body.dataset.tabs || "";
+const tabConfig = TAB_CONFIGS[tabMode] || null;
 
 let snapshot = null;
 let newOnly = false;
 let searchQuery = "";
-let activeTcsTab = "";
+let activeSubcategoryTab = "";
 
 const els = {
   metaBar: document.getElementById("metaBar"),
@@ -52,7 +87,7 @@ const els = {
   searchInput: document.getElementById("searchInput"),
   newOnly: document.getElementById("newOnly"),
   cardTemplate: document.getElementById("cardTemplate"),
-  tcsTabs: document.getElementById("tcsTabs"),
+  subcategoryTabs: document.getElementById("subcategoryTabs"),
 };
 
 function formatTime(iso) {
@@ -155,62 +190,69 @@ function renderHome() {
   els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內共 ${snapshot.total} 項${autoUpdate}`;
 }
 
-function getTcsTabLabel(key) {
-  const tab = TCS_TABS.find((entry) => entry.key === key);
+function getTabLabel(key) {
+  if (!tabConfig) return key;
+  const tab = tabConfig.tabs.find((entry) => entry.key === key);
   return tab ? tab.label : key;
 }
 
-function initTcsTabFromHash() {
-  if (!hasTcsTabs) return;
+function initSubcategoryTabFromHash() {
+  if (!tabConfig) return;
   const hash = window.location.hash.replace("#", "");
-  if (TCS_TABS.some((tab) => tab.key === hash)) {
-    activeTcsTab = hash;
+  if (tabConfig.tabs.some((tab) => tab.key === hash)) {
+    activeSubcategoryTab = hash;
   }
 }
 
-function countTcsBySubcategory(items) {
+function countBySubcategory(items, fallback) {
   const counts = {};
   items.forEach((item) => {
-    const key = item.subcategory || "other";
+    const key = item.subcategory || fallback;
     counts[key] = (counts[key] || 0) + 1;
   });
   return counts;
 }
 
-function renderTcsTabs() {
-  if (!els.tcsTabs || !hasTcsTabs) return;
+function categoryItems() {
+  if (!tabConfig) return [];
+  return (snapshot.items || []).filter((item) => item.category === tabConfig.category);
+}
 
-  const tcsItems = (snapshot.items || []).filter((item) => item.category === "tcs_teacher");
-  const counts = countTcsBySubcategory(tcsItems);
-  els.tcsTabs.innerHTML = "";
-  els.tcsTabs.classList.remove("hidden");
+function renderSubcategoryTabs() {
+  if (!els.subcategoryTabs || !tabConfig) return;
 
-  TCS_TABS.forEach((tab) => {
-    const count = tab.key ? counts[tab.key] || 0 : tcsItems.length;
+  const items = categoryItems();
+  const counts = countBySubcategory(items, tabConfig.fallback);
+  els.subcategoryTabs.innerHTML = "";
+  els.subcategoryTabs.classList.remove("hidden");
+  els.subcategoryTabs.style.setProperty("--tab-accent", tabConfig.accent);
+
+  tabConfig.tabs.forEach((tab) => {
+    const count = tab.key ? counts[tab.key] || 0 : items.length;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `tcs-tab${activeTcsTab === tab.key ? " active" : ""}`;
-    button.innerHTML = `<span class="tcs-tab-label">${tab.label}</span><span class="tcs-tab-count">${count}</span>`;
+    button.className = `subcategory-tab${activeSubcategoryTab === tab.key ? " active" : ""}`;
+    button.innerHTML = `<span class="subcategory-tab-label">${tab.label}</span><span class="subcategory-tab-count">${count}</span>`;
     button.addEventListener("click", () => {
-      activeTcsTab = tab.key;
+      activeSubcategoryTab = tab.key;
       window.location.hash = tab.key;
       renderCategoryPage();
     });
-    els.tcsTabs.appendChild(button);
+    els.subcategoryTabs.appendChild(button);
   });
 }
 
 function renderPageStats() {
   if (!els.pageStats) return;
 
-  if (hasTcsTabs) {
-    const tcsItems = (snapshot.items || []).filter((item) => item.category === "tcs_teacher");
-    const tabLabel = activeTcsTab ? getTcsTabLabel(activeTcsTab) : "全部";
-    const tabItems = activeTcsTab
-      ? tcsItems.filter((item) => (item.subcategory || "other") === activeTcsTab)
-      : tcsItems;
+  if (tabConfig) {
+    const items = categoryItems();
+    const tabLabel = activeSubcategoryTab ? getTabLabel(activeSubcategoryTab) : "全部";
+    const tabItems = activeSubcategoryTab
+      ? items.filter((item) => (item.subcategory || tabConfig.fallback) === activeSubcategoryTab)
+      : items;
     const fresh = tabItems.filter((item) => item.is_new).length;
-    const colors = CATEGORY_COLORS.tcs_teacher;
+    const colors = CATEGORY_COLORS[tabConfig.category] || CATEGORY_COLORS.edb_circular;
 
     els.pageStats.innerHTML = `
       <div class="page-stat-card" style="border-color:${colors.color}">
@@ -219,7 +261,7 @@ function renderPageStats() {
         <div class="page-stat-new">${fresh} 項新資料</div>
       </div>
     `;
-    renderTcsTabs();
+    renderSubcategoryTabs();
     return;
   }
 
@@ -240,10 +282,13 @@ function filteredItems() {
   return (snapshot.items || [])
     .filter((item) => {
       if (item.category !== pageCategory) return false;
-      if (hasTcsTabs && activeTcsTab && (item.subcategory || "other") !== activeTcsTab) return false;
+      if (tabConfig && activeSubcategoryTab) {
+        const key = item.subcategory || tabConfig.fallback;
+        if (key !== activeSubcategoryTab) return false;
+      }
       if (newOnly && !item.is_new) return false;
       if (!searchQuery) return true;
-      const blob = `${item.title} ${item.summary} ${item.category_label} ${item.subcategory_label || ""}`.toLowerCase();
+      const blob = `${item.title} ${item.summary} ${item.category_label} ${item.subcategory_label || ""} ${item.level_label || ""}`.toLowerCase();
       return blob.includes(searchQuery);
     })
     .sort((a, b) => {
@@ -265,6 +310,7 @@ function renderCards(items) {
     const card = node.querySelector(".card");
     const categoryBadge = node.querySelector(".category-badge");
     const subcategoryBadge = node.querySelector(".subcategory-badge");
+    const levelBadge = node.querySelector(".level-badge");
     const newBadge = node.querySelector(".new-badge");
     const titleLink = node.querySelector(".card-title a");
     const dateEl = node.querySelector(".card-date");
@@ -287,6 +333,15 @@ function renderCards(items) {
       subcategoryBadge.classList.add("hidden");
     }
 
+    if (levelBadge) {
+      if (item.level_label) {
+        levelBadge.textContent = item.level_label;
+        levelBadge.classList.remove("hidden");
+      } else {
+        levelBadge.classList.add("hidden");
+      }
+    }
+
     titleLink.textContent = item.title;
     titleLink.href = item.url || "#";
 
@@ -304,7 +359,7 @@ function renderCategoryPage() {
   const items = filteredItems();
   const lookback = snapshot.lookback_days || 365;
   const autoUpdate = isLocalServer ? "" : " · 每 6 小時自動更新";
-  const tabSuffix = hasTcsTabs && activeTcsTab ? ` · ${getTcsTabLabel(activeTcsTab)}` : "";
+  const tabSuffix = tabConfig && activeSubcategoryTab ? ` · ${getTabLabel(activeSubcategoryTab)}` : "";
   els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內 ${items.length} 項${tabSuffix} · 按日期由近到遠排列${autoUpdate}`;
   renderPageStats();
   renderCards(items);
@@ -340,12 +395,12 @@ if (els.newOnly) {
     els.emptyState.classList.toggle("hidden", filteredItems().length > 0);
   });
 }
-if (hasTcsTabs) {
+if (tabConfig) {
   window.addEventListener("hashchange", () => {
-    initTcsTabFromHash();
+    initSubcategoryTabFromHash();
     renderCategoryPage();
   });
-  initTcsTabFromHash();
+  initSubcategoryTabFromHash();
 }
 
 document.title = pageCategory ? `${pageTitle} · 香港教育更新` : "香港教育更新儀表板";

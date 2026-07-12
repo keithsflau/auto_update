@@ -74,8 +74,8 @@ USER_AGENT = (
 )
 
 CATEGORY_LABELS = {
-    "steam_secondary": "STEAM 中學比賽",
-    "steam_primary": "STEAM 小學比賽",
+    "competition": "學界比賽",
+    "scholarship": "獎學金申請",
     "tcs_teacher": "教師培訓 (TCS)",
     "qef": "優質教育基金 (QEF)",
     "edb_circular": "教育局通函",

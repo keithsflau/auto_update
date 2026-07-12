@@ -5,10 +5,11 @@ import sys
 
 from monitor.config import INITIAL_RUN_NOTIFY
 from monitor.models import UpdateItem
+from monitor.sources.competitions import fetch_competition_items
 from monitor.sources.edb_circular import fetch_edb_circular_items
 from monitor.sources.edb_news import fetch_edb_news_items
 from monitor.sources.qef import fetch_qef_items
-from monitor.sources.steam_competition import fetch_steam_competition_items
+from monitor.sources.scholarships import fetch_scholarship_items
 from monitor.sources.tcs_calendar import fetch_tcs_teacher_items
 from monitor.state import load_state, log, save_state
 from monitor.dashboard import build_snapshot, save_snapshot
@@ -18,7 +19,8 @@ from monitor.tcs_email import maybe_send_tcs_daily_email
 
 def collect_all_items() -> list[UpdateItem]:
     collectors = [
-        fetch_steam_competition_items,
+        fetch_competition_items,
+        fetch_scholarship_items,
         fetch_tcs_teacher_items,
         fetch_qef_items,
         fetch_edb_circular_items,

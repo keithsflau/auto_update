@@ -5,13 +5,28 @@ from collections import Counter
 from datetime import datetime, timezone
 
 from monitor.config import BASE_DIR, CATEGORY_LABELS
-from monitor.filters import TCS_SUBCATEGORY_LABELS
+from monitor.filters import (
+    COMPETITION_TYPE_LABELS,
+    LEVEL_LABELS,
+    SCHOLARSHIP_TYPE_LABELS,
+    TCS_SUBCATEGORY_LABELS,
+)
 from monitor.models import UpdateItem
 from monitor.state import load_state, normalize_text
 from monitor.text_util import format_display_date, parse_item_date, within_last_year
 
 DASHBOARD_FILE = BASE_DIR / "data" / "dashboard.json"
 LOOKBACK_DAYS = 365
+
+
+def _subcategory_label(item: UpdateItem) -> str:
+    if item.category == "tcs_teacher":
+        return TCS_SUBCATEGORY_LABELS.get(item.subcategory, "")
+    if item.category == "competition":
+        return COMPETITION_TYPE_LABELS.get(item.subcategory, "")
+    if item.category == "scholarship":
+        return SCHOLARSHIP_TYPE_LABELS.get(item.subcategory, "")
+    return ""
 
 
 def item_to_dict(item: UpdateItem, *, is_new: bool) -> dict:
@@ -31,7 +46,9 @@ def item_to_dict(item: UpdateItem, *, is_new: bool) -> dict:
         "date_sort": parsed.strftime("%Y-%m-%d") if parsed else "",
         "summary": summary,
         "subcategory": item.subcategory,
-        "subcategory_label": TCS_SUBCATEGORY_LABELS.get(item.subcategory, ""),
+        "subcategory_label": _subcategory_label(item),
+        "level": item.level,
+        "level_label": LEVEL_LABELS.get(item.level, ""),
         "is_new": is_new,
         "fingerprint": item.fingerprint(),
     }

@@ -12,6 +12,7 @@ class UpdateItem:
     date: str = ""
     summary: str = ""
     subcategory: str = ""
+    level: str = ""
 
     def fingerprint(self) -> str:
         return f"{self.category}:{self.item_id}"
