@@ -3,41 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>?�師?��? (TCS)</title>
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <title>教師培訓 (TCS)</title>
+  <link rel="stylesheet" href="styles.css?v=4" />
 </head>
-<body data-category="tcs_teacher" data-title="?�師?��? (TCS)" data-tabs="tcs">
+<body data-category="tcs_teacher" data-title="教師培訓 (TCS)" data-tabs="tcs">
   <div class="page">
     <header class="header">
       <div class="header-top">
         <div>
           <p class="eyebrow">Hong Kong Education Monitor</p>
-          <h1 id="pageHeading">?�師?��? (TCS)</h1>
+          <h1 id="pageHeading">教師培訓 (TCS)</h1>
         </div>
         <div class="header-actions">
           <label class="toggle">
             <input type="checkbox" id="newOnly" />
-            <span>?�顯示新資�?</span>
+            <span>只顯示新資料</span>
           </label>
-          <button class="btn btn-primary" id="refreshBtn">?�新?��?</button>
+          <button class="btn btn-primary" id="refreshBtn">重新整理</button>
         </div>
       </div>
       <nav class="page-nav" id="pageNav"></nav>
-      <div class="meta" id="metaBar">載入中�?/div>
+      <div class="meta" id="metaBar">載入中…</div>
       <div class="page-stats" id="pageStats"></div>
-      <nav class="subcategory-tabs hidden" id="subcategoryTabs" aria-label="TCS ?��?"></nav>
+      <nav class="subcategory-tabs hidden" id="subcategoryTabs" aria-label="TCS 分類"></nav>
       <div class="toolbar">
-        <input type="search" id="searchInput" placeholder="?��?標�??��?要、TCS ?��??? />
+        <input type="search" id="searchInput" placeholder="搜尋標題、摘要、TCS 分類…" />
       </div>
     </header>
 
     <main>
       <div class="loading hidden" id="loading">
         <div class="spinner"></div>
-        <p>�?��載入資�???/p>
+        <p>正在載入資料…</p>
       </div>
       <div class="empty hidden" id="emptyState">
-        <p>沒�?符�?條件?��???/p>
+        <p>沒有符合條件的項目</p>
       </div>
       <section class="cards" id="cardsGrid"></section>
     </main>
@@ -49,7 +49,7 @@
         <span class="badge category-badge"></span>
         <span class="badge subcategory-badge hidden"></span>
         <span class="badge level-badge hidden"></span>
-        <span class="badge new-badge hidden">??/span>
+        <span class="badge new-badge hidden">新</span>
       </div>
       <h2 class="card-title"><a target="_blank" rel="noopener"></a></h2>
       <p class="card-date"></p>
@@ -57,6 +57,6 @@
     </article>
   </template>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
