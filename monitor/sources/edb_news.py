@@ -8,11 +8,11 @@ from datetime import datetime, timedelta
 
 import requests
 
-from monitor.filters import classify_news_levels, is_education_news
+from monitor.filters import classify_news_levels, is_school_news
 from monitor.models import UpdateItem
 from monitor.sources.hk_media_feeds import HK_MEDIA_FEEDS
 from monitor.state import log, normalize_text
-from monitor.text_util import parse_item_date
+from monitor.text_util import parse_item_date, strip_html
 
 FEED_TIMEOUT = 20
 FEED_WORKERS = 10
@@ -64,7 +64,7 @@ def _parse_feed_items(xml_bytes: bytes, *, feed_key: str) -> list[dict]:
 
     items: list[dict] = []
     for node in nodes:
-        title = normalize_text(_child_text(node, "title"))
+        title = normalize_text(strip_html(_child_text(node, "title")))
         link = _child_text(node, "link")
         if not link:
             link = _child_attr(node, "link", "href")
@@ -79,7 +79,7 @@ def _parse_feed_items(xml_bytes: bytes, *, feed_key: str) -> list[dict]:
             or link
             or title
         ).strip()
-        description = normalize_text(
+        description = strip_html(
             _child_text(node, "description") or _child_text(node, "summary")
         )
         if not title:
@@ -109,9 +109,9 @@ def _split_google_news_title(title: str) -> tuple[str, str]:
 
 def _build_summary(source: str, description: str, media_source: str = "") -> str:
     label = media_source or source
-    body = description.strip()
+    body = strip_html(description).strip()
     if body:
-        return f"[{label}] {body[:300]}"
+        return f"[{label}] {body[:180]}"
     return f"[{label}]"
 
 
@@ -138,16 +138,14 @@ def fetch_edb_news_items() -> list[UpdateItem]:
             feed_key, rows = future.result()
             feed = feed_by_key[feed_key]
             source = str(feed["source"])
-            education_only = bool(feed.get("education_only", False))
 
             for row in rows:
-                blob = f"{row['title']} {row['summary']}"
-                if education_only and not is_education_news(blob):
+                filter_blob = f"{row['title']} {strip_html(row['summary'])[:200]}"
+                if not is_school_news(filter_blob):
                     continue
 
                 row["source"] = source
                 row["level_hint"] = str(feed.get("level_hint") or "")
-                row["include_general"] = bool(feed.get("include_general", False))
                 row["summary"] = _build_summary(source, row["summary"], row.get("media_source", ""))
                 raw_items[row["id"]] = row
 
@@ -167,7 +165,6 @@ def fetch_edb_news_items() -> list[UpdateItem]:
             row["title"],
             row["summary"],
             level_hint=row.get("level_hint") or None,
-            include_general=bool(row.get("include_general")),
         ):
             item = UpdateItem(
                 category=category,

@@ -43,7 +43,7 @@ COMPETITION_KEYWORDS = (
     r"挑戰",
 )
 
-PRIMARY_KEYWORDS = (r"小學", r"primary", r"小一", r"幼兒")
+PRIMARY_KEYWORDS = (r"小學", r"primary", r"小一", r"幼稚園")
 SECONDARY_KEYWORDS = (r"中學", r"secondary", r"初中", r"高中", r"中一")
 
 TCS_CORE_KEYWORDS = (
@@ -246,6 +246,54 @@ def is_education_news(text: str) -> bool:
     return _matches_any(text, EDUCATION_NEWS_KEYWORDS)
 
 
+NON_EDUCATION_NEWS_KEYWORDS = (
+    r"颱風",
+    r"風球",
+    r"暴雨",
+    r"天氣",
+    r"賽車",
+    r"電單車",
+    r"摩打",
+    r"演唱會",
+    r"音樂會",
+    r"愛回家",
+    r"開心速遞",
+    r"娛樂",
+    r"藝人",
+    r"明星",
+    r"偶像",
+    r"k-pop",
+    r"kpop",
+    r"足球",
+    r"籃球",
+    r"英超",
+    r"世界盃",
+    r"奧運",
+    r"股市",
+    r"樓市",
+    r"金價",
+    r"油價",
+    r"美食",
+    r"火鍋",
+    r"自助餐",
+    r"旅遊",
+    r"酒店",
+    r"機票",
+)
+
+
+def is_non_education_noise(text: str) -> bool:
+    return _matches_any(text, NON_EDUCATION_NEWS_KEYWORDS)
+
+
+def is_school_news(text: str) -> bool:
+    if is_non_education_noise(text):
+        return False
+    if not is_education_news(text):
+        return False
+    return is_primary_level(text) or is_secondary_level(text)
+
+
 def classify_news_levels(
     title: str,
     summary: str = "",
@@ -253,12 +301,17 @@ def classify_news_levels(
     level_hint: str | None = None,
     include_general: bool = False,
 ) -> list[str]:
+    del include_general
+
+    blob = " ".join([title, summary])
+    if not is_school_news(blob):
+        return []
+
     if level_hint == "primary":
         return ["news_primary"]
     if level_hint == "secondary":
         return ["news_secondary"]
 
-    blob = " ".join([title, summary])
     primary = is_primary_level(blob)
     secondary = is_secondary_level(blob)
     levels: list[str] = []
@@ -266,8 +319,4 @@ def classify_news_levels(
         levels.append("news_primary")
     if secondary:
         levels.append("news_secondary")
-    if levels:
-        return levels
-    if include_general:
-        return ["news_primary", "news_secondary"]
-    return []
+    return levels

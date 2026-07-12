@@ -1,10 +1,22 @@
 from __future__ import annotations
 
+import html
 import re
 from datetime import datetime, timedelta
 from email.utils import parsedate_to_datetime
 
 MOJIBAKE_MARKERS = ("æ", "å", "ä", "Ã", "â€", "ï¼", "è", "é")
+
+
+def strip_html(text: str) -> str:
+    if not text:
+        return ""
+
+    cleaned = re.sub(r"(?is)<(script|style)\b.*?>.*?</\1>", " ", text)
+    cleaned = re.sub(r"(?s)<[^>]+>", " ", cleaned)
+    cleaned = html.unescape(cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return fix_mojibake(cleaned)
 
 
 def fix_mojibake(text: str) -> str:
