@@ -23,20 +23,48 @@ def _fetch_html(url: str) -> str:
 
 def _parse_tcs_html(html: str) -> list[dict]:
     soup = BeautifulSoup(html, "html.parser")
+    body = soup.select_one("div.divTableBody")
+    if not body:
+        return []
+
     courses: list[dict] = []
-    for anchor in soup.select("a.divTableTitle"):
-        div = anchor.select_one("div")
-        if not div:
+    for row in body.select("div.divTableRow"):
+        if "head" in (row.get("class") or []):
             continue
-        text = normalize_text(div.get_text(" ", strip=True))
-        match = re.match(r"([A-Z0-9]+)\s+(.+)", text)
-        if not match:
+
+        cells = row.select("div.divTableCell")
+        if len(cells) < 4:
             continue
-        course_id, title = match.group(1), match.group(2)
+
+        event_date = normalize_text(cells[0].get_text(" ", strip=True))
+        course_id_text = normalize_text(cells[1].get_text(" ", strip=True))
+        course_id_match = re.match(r"([A-Z0-9]+)", course_id_text)
+        if not course_id_match:
+            continue
+        course_id = course_id_match.group(1)
+
+        title = ""
+        title_anchor = cells[3].select_one("a.divTableTitle")
+        if title_anchor:
+            title_div = title_anchor.select_one("div")
+            title_text = title_div.get_text(" ", strip=True) if title_div else title_anchor.get_text(" ", strip=True)
+            title_text = normalize_text(title_text)
+            embedded = re.match(rf"{re.escape(course_id)}\s+(.+)", title_text)
+            title = embedded.group(1) if embedded else title_text
+        else:
+            title = normalize_text(cells[3].get_text(" ", strip=True))
+
+        if not title:
+            continue
+
+        closing_date = normalize_text(cells[5].get_text(" ", strip=True)) if len(cells) > 5 else ""
+        date = closing_date.split()[0] if closing_date else event_date
+
         courses.append(
             {
                 "course_id": course_id,
                 "title": title,
+                "date": date,
                 "url": (
                     "https://tcs.edb.gov.hk/tcs/admin/courses/previewCourse/"
                     f"forPortal.htm?courseId={course_id}&lang=zh_TW"
@@ -92,6 +120,7 @@ def fetch_tcs_teacher_items() -> list[UpdateItem]:
                     item_id=course["course_id"],
                     title=course["title"],
                     url=course["url"],
+                    date=course.get("date", ""),
                     subcategory=classify_tcs_subcategory(course["title"], course["course_id"]),
                 )
         except requests.RequestException:

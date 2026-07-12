@@ -70,6 +70,10 @@ def _parse_one_date(text: str) -> datetime | None:
     if match:
         return datetime(int(match.group(1)), int(match.group(2)), int(match.group(3)))
 
+    match = re.search(r"(\d{4})/(\d{2})(?:\D|$)", text)
+    if match:
+        return datetime(int(match.group(1)), int(match.group(2)), 1)
+
     match = re.search(r"(20\d{2})年", text)
     if match:
         return datetime(int(match.group(1)), 1, 1)

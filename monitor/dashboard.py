@@ -72,7 +72,8 @@ def build_snapshot(
     items = [
         row
         for row in items
-        if within_last_year(parse_item_date(row["date_raw"], row["title"]), days=LOOKBACK_DAYS)
+        if row["category"] == "tcs_teacher"
+        or within_last_year(parse_item_date(row["date_raw"], row["title"]), days=LOOKBACK_DAYS)
     ]
 
     items.sort(
