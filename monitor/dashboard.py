@@ -22,7 +22,7 @@ LOOKBACK_DAYS = 365
 def _subcategory_label(item: UpdateItem) -> str:
     if item.category == "tcs_teacher":
         return TCS_SUBCATEGORY_LABELS.get(item.subcategory, "")
-    if item.category == "competition":
+    if item.category in {"competition_primary", "competition_secondary"}:
         return COMPETITION_TYPE_LABELS.get(item.subcategory, "")
     if item.category == "scholarship":
         return SCHOLARSHIP_TYPE_LABELS.get(item.subcategory, "")

@@ -74,7 +74,8 @@ USER_AGENT = (
 )
 
 CATEGORY_LABELS = {
-    "competition": "學界比賽",
+    "competition_primary": "小學比賽",
+    "competition_secondary": "中學比賽",
     "scholarship": "獎學金申請",
     "tcs_teacher": "教師培訓 (TCS)",
     "qef": "優質教育基金 (QEF)",

@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+from pathlib import Path
+
+INDEX_HTML = """<!DOCTYPE html>
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
@@ -38,3 +40,34 @@
   <script src="app.js?v=5"></script>
 </body>
 </html>
+"""
+
+SKIP = {"steam-primary.html", "steam-secondary.html", "competitions.html"}
+
+
+def bump_cache(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    text = text.replace('href="styles.css?v=4"', 'href="styles.css?v=5"')
+    if 'href="styles.css?v=' not in text:
+        text = text.replace('href="styles.css"', 'href="styles.css?v=5"')
+    text = text.replace('src="app.js?v=4"', 'src="app.js?v=5"')
+    if 'src="app.js?v=' not in text:
+        text = text.replace('src="app.js"', 'src="app.js?v=5"')
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
+def main() -> None:
+    index_path = Path("web/index.html")
+    index_path.write_text(INDEX_HTML, encoding="utf-8", newline="\n")
+    assert "香港教育" in index_path.read_text(encoding="utf-8")
+    print("wrote index.html")
+
+    for path in sorted(Path("web").glob("*.html")):
+        if path.name in SKIP or path.name == "index.html":
+            continue
+        bump_cache(path)
+        print(f"updated {path.name}")
+
+
+if __name__ == "__main__":
+    main()

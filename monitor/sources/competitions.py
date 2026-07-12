@@ -38,6 +38,16 @@ def _build_summary(source: str, description: str, media_source: str = "", level:
     return prefix
 
 
+def _categories_for_level(level: str) -> list[str]:
+    if level == "primary":
+        return ["competition_primary"]
+    if level == "secondary":
+        return ["competition_secondary"]
+    if level == "both":
+        return ["competition_primary", "competition_secondary"]
+    return ["competition_primary", "competition_secondary"]
+
+
 def _add_item(
     found: dict[str, UpdateItem],
     *,
@@ -49,17 +59,18 @@ def _add_item(
     subcategory: str = "general",
     level: str = "",
 ) -> None:
-    item = UpdateItem(
-        category="competition",
-        item_id=item_id,
-        title=title,
-        url=url,
-        date=date,
-        summary=summary,
-        subcategory=subcategory,
-        level=level,
-    )
-    found[item.fingerprint()] = item
+    for category in _categories_for_level(level):
+        item = UpdateItem(
+            category=category,
+            item_id=item_id,
+            title=title,
+            url=url,
+            date=date,
+            summary=summary,
+            subcategory=subcategory,
+            level=level,
+        )
+        found[item.fingerprint()] = item
 
 
 def fetch_competition_items() -> list[UpdateItem]:

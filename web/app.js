@@ -1,5 +1,17 @@
+const COMPETITION_TYPE_TABS = [
+  { key: "", label: "全部" },
+  { key: "steam", label: "STEAM / 創科" },
+  { key: "science", label: "科學 / 數學" },
+  { key: "arts", label: "藝術 / 文化" },
+  { key: "sports", label: "體育" },
+  { key: "language", label: "語文 / 辯論" },
+  { key: "social", label: "公民 / 服務" },
+  { key: "general", label: "其他比賽" },
+];
+
 const PAGES = [
-  { key: "competition", file: "competitions.html", label: "學界比賽" },
+  { key: "competition_primary", file: "competitions-primary.html", label: "小學比賽" },
+  { key: "competition_secondary", file: "competitions-secondary.html", label: "中學比賽" },
   { key: "scholarship", file: "scholarships.html", label: "獎學金申請" },
   { key: "tcs_teacher", file: "tcs.html", label: "教師培訓 (TCS)" },
   { key: "news_primary", file: "news-primary.html", label: "小學新聞" },
@@ -9,7 +21,8 @@ const PAGES = [
 ];
 
 const CATEGORY_COLORS = {
-  competition: { bg: "#eefaf3", color: "#0f7a4c" },
+  competition_primary: { bg: "#eefaf3", color: "#0f7a4c" },
+  competition_secondary: { bg: "#eef6ff", color: "#1f5eff" },
   scholarship: { bg: "#fff7ed", color: "#c2410c" },
   tcs_teacher: { bg: "#f6f0ff", color: "#6d28d9" },
   news_primary: { bg: "#fff1f2", color: "#be123c" },
@@ -35,20 +48,17 @@ const TAB_CONFIGS = {
       { key: "other", label: "其他" },
     ],
   },
-  competition: {
-    category: "competition",
+  competition_primary: {
+    category: "competition_primary",
     accent: "#0f7a4c",
     fallback: "general",
-    tabs: [
-      { key: "", label: "全部" },
-      { key: "steam", label: "STEAM / 創科" },
-      { key: "science", label: "科學 / 數學" },
-      { key: "arts", label: "藝術 / 文化" },
-      { key: "sports", label: "體育" },
-      { key: "language", label: "語文 / 辯論" },
-      { key: "social", label: "公民 / 服務" },
-      { key: "general", label: "其他比賽" },
-    ],
+    tabs: COMPETITION_TYPE_TABS,
+  },
+  competition_secondary: {
+    category: "competition_secondary",
+    accent: "#1f5eff",
+    fallback: "general",
+    tabs: COMPETITION_TYPE_TABS,
   },
   scholarship: {
     category: "scholarship",
