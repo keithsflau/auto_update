@@ -26,6 +26,7 @@ TCS_SUBCATEGORY_ORDER = (
     "exchange",
     "guidance",
     "promotion",
+    "online_learning",
     "other",
 )
 

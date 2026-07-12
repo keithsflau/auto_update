@@ -45,6 +45,7 @@ const TAB_CONFIGS = {
       { key: "exchange", label: "交流團" },
       { key: "guidance", label: "訓輔導" },
       { key: "promotion", label: "晉升" },
+      { key: "online_learning", label: "網上自學" },
       { key: "other", label: "其他" },
     ],
   },
