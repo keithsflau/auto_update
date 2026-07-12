@@ -18,13 +18,27 @@ const CATEGORY_COLORS = {
   edb_circular: { bg: "#f8fafc", color: "#334155" },
 };
 
+const TCS_TABS = [
+  { key: "", label: "全部" },
+  { key: "steam", label: "STEAM" },
+  { key: "ai", label: "AI" },
+  { key: "admin", label: "行政" },
+  { key: "self_review", label: "自評" },
+  { key: "exchange", label: "交流團" },
+  { key: "guidance", label: "訓輔導" },
+  { key: "promotion", label: "晉升" },
+  { key: "other", label: "其他" },
+];
+
 const isLocalServer = ["localhost", "127.0.0.1"].includes(window.location.hostname);
 const pageCategory = document.body.dataset.category || "";
 const pageTitle = document.body.dataset.title || "香港教育更新儀表板";
+const hasTcsTabs = document.body.dataset.tabs === "tcs";
 
 let snapshot = null;
 let newOnly = false;
 let searchQuery = "";
+let activeTcsTab = "";
 
 const els = {
   metaBar: document.getElementById("metaBar"),
@@ -38,6 +52,7 @@ const els = {
   searchInput: document.getElementById("searchInput"),
   newOnly: document.getElementById("newOnly"),
   cardTemplate: document.getElementById("cardTemplate"),
+  tcsTabs: document.getElementById("tcsTabs"),
 };
 
 function formatTime(iso) {
@@ -140,8 +155,73 @@ function renderHome() {
   els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內共 ${snapshot.total} 項${autoUpdate}`;
 }
 
+function getTcsTabLabel(key) {
+  const tab = TCS_TABS.find((entry) => entry.key === key);
+  return tab ? tab.label : key;
+}
+
+function initTcsTabFromHash() {
+  if (!hasTcsTabs) return;
+  const hash = window.location.hash.replace("#", "");
+  if (TCS_TABS.some((tab) => tab.key === hash)) {
+    activeTcsTab = hash;
+  }
+}
+
+function countTcsBySubcategory(items) {
+  const counts = {};
+  items.forEach((item) => {
+    const key = item.subcategory || "other";
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return counts;
+}
+
+function renderTcsTabs() {
+  if (!els.tcsTabs || !hasTcsTabs) return;
+
+  const tcsItems = (snapshot.items || []).filter((item) => item.category === "tcs_teacher");
+  const counts = countTcsBySubcategory(tcsItems);
+  els.tcsTabs.innerHTML = "";
+  els.tcsTabs.classList.remove("hidden");
+
+  TCS_TABS.forEach((tab) => {
+    const count = tab.key ? counts[tab.key] || 0 : tcsItems.length;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `tcs-tab${activeTcsTab === tab.key ? " active" : ""}`;
+    button.innerHTML = `<span class="tcs-tab-label">${tab.label}</span><span class="tcs-tab-count">${count}</span>`;
+    button.addEventListener("click", () => {
+      activeTcsTab = tab.key;
+      window.location.hash = tab.key;
+      renderCategoryPage();
+    });
+    els.tcsTabs.appendChild(button);
+  });
+}
+
 function renderPageStats() {
   if (!els.pageStats) return;
+
+  if (hasTcsTabs) {
+    const tcsItems = (snapshot.items || []).filter((item) => item.category === "tcs_teacher");
+    const tabLabel = activeTcsTab ? getTcsTabLabel(activeTcsTab) : "全部";
+    const tabItems = activeTcsTab
+      ? tcsItems.filter((item) => (item.subcategory || "other") === activeTcsTab)
+      : tcsItems;
+    const fresh = tabItems.filter((item) => item.is_new).length;
+    const colors = CATEGORY_COLORS.tcs_teacher;
+
+    els.pageStats.innerHTML = `
+      <div class="page-stat-card" style="border-color:${colors.color}">
+        <div class="page-stat-label" style="color:${colors.color}">${tabLabel}</div>
+        <div class="page-stat-value">${tabItems.length}</div>
+        <div class="page-stat-new">${fresh} 項新資料</div>
+      </div>
+    `;
+    renderTcsTabs();
+    return;
+  }
 
   const total = snapshot.counts?.[pageCategory] || 0;
   const fresh = snapshot.new_counts?.[pageCategory] || 0;
@@ -160,6 +240,7 @@ function filteredItems() {
   return (snapshot.items || [])
     .filter((item) => {
       if (item.category !== pageCategory) return false;
+      if (hasTcsTabs && activeTcsTab && (item.subcategory || "other") !== activeTcsTab) return false;
       if (newOnly && !item.is_new) return false;
       if (!searchQuery) return true;
       const blob = `${item.title} ${item.summary} ${item.category_label} ${item.subcategory_label || ""}`.toLowerCase();
@@ -223,7 +304,8 @@ function renderCategoryPage() {
   const items = filteredItems();
   const lookback = snapshot.lookback_days || 365;
   const autoUpdate = isLocalServer ? "" : " · 每 6 小時自動更新";
-  els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內 ${items.length} 項 · 按日期由近到遠排列${autoUpdate}`;
+  const tabSuffix = hasTcsTabs && activeTcsTab ? ` · ${getTcsTabLabel(activeTcsTab)}` : "";
+  els.metaBar.textContent = `最後更新：${formatTime(snapshot.updated_at)} · 近 ${lookback} 日內 ${items.length} 項${tabSuffix} · 按日期由近到遠排列${autoUpdate}`;
   renderPageStats();
   renderCards(items);
 }
@@ -257,6 +339,13 @@ if (els.newOnly) {
     renderCards(filteredItems());
     els.emptyState.classList.toggle("hidden", filteredItems().length > 0);
   });
+}
+if (hasTcsTabs) {
+  window.addEventListener("hashchange", () => {
+    initTcsTabFromHash();
+    renderCategoryPage();
+  });
+  initTcsTabFromHash();
 }
 
 document.title = pageCategory ? `${pageTitle} · 香港教育更新` : "香港教育更新儀表板";

@@ -133,6 +133,56 @@ h1 {
   border-color: var(--text);
 }
 
+.tcs-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.tcs-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.tcs-tab:hover {
+  border-color: #6d28d9;
+  color: #6d28d9;
+}
+
+.tcs-tab.active {
+  background: #6d28d9;
+  color: white;
+  border-color: #6d28d9;
+}
+
+.tcs-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(109, 40, 217, 0.1);
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tcs-tab.active .tcs-tab-count {
+  background: rgba(255, 255, 255, 0.18);
+}
+
 .home-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
